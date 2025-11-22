@@ -1,0 +1,4685 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BSC Wallet — Laam</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+  <!-- QRCode.js (browser-side QR generator) -->
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+  /* ===== VARIABLES ===== */
+  :root {
+    --primary: #4a6cf7;
+    --primary-dark: #3a5ce5;
+    --primary-light: #f0f4ff;
+    --secondary: #6c5ce7;
+    --success: #00b894;
+    --danger: #ff7675;
+    --warning: #fdcb6e;
+    --dark: #2d3436;
+    --light: #f8f9fa;
+    --gray: #636e72;
+    --gray-light: #dfe6e9;
+    --white: #ffffff;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --radius: 16px;
+    --radius-sm: 8px;
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+
+  /* ===== RESET & BASE STYLES ===== */
+  * { 
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+body {
+  background: radial-gradient(circle at center, #004e64, #00a5a5, #9fffe0);
+}
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+  
+  
+    /* ===== CONTAINER ===== */
+  .container {
+    width: 100%;
+    max-width: 440px;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+  }
+.trade-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px 10px;
+  margin-bottom: 6px;
+}
+
+.back-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e6e9f2;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  cursor: pointer;
+  font-size: 16px;
+  color: #4a6cf7;
+}
+
+.trade-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e2a45;
+}
+/* ====== Trade Screen Styles - Laam Swap UI ====== */
+.trade-screen {
+  bottom: 60px;  /* kor u dhaqaaji si navigation bar uu muuqdo */
+  max-height: calc(100vh - 60px);
+}
+/* Inner scrollable area so content can scroll while header stays visible */
+.swap-container-inner {
+  overflow-y: auto;
+  max-height: calc(82vh - 50px); /* 50px waa navigation + padding */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Card-like input blocks */
+.swap-input {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 6px 14px rgba(14, 30, 80, 0.06);
+  border: 1px solid rgba(74,108,247,0.06);
+}
+
+.swap-input label {
+  display: block;
+  font-size: 12px;
+  color: #55607a;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* input + token selector row */
+.input-with-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.amount-input {
+  flex: 1;
+  font-size: 20px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e6e9f2;
+  outline: none;
+  box-sizing: border-box;
+  background: #fbfcff;
+}
+
+/* Make inputs taller for easy mobile tapping */
+.amount-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Token selector */
+.token-selector {
+  display: flex;
+  align-items: center;
+}
+
+.token-selector-btn {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:10px;
+  border: 1px solid #e6e9f2;
+  background:linear-gradient(180deg,#ffffff,#fbfdff);
+  cursor:pointer;
+  font-weight:600;
+  font-size:13px;
+}
+
+/* Swap arrow button */
+.swap-arrow {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin: 6px 0;
+}
+
+.swap-arrow-btn {
+  background:white;
+  border-radius:50%;
+  width:44px;
+  height:44px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow: 0 6px 14px rgba(14,30,80,0.06);
+  border:1px solid rgba(230,233,242,0.6);
+  cursor:pointer;
+}
+
+/* Price info */
+#priceInfo {
+  font-size: 13px;
+  color: #334155;
+  background: rgba(74,108,247,0.03);
+  padding: 8px 10px;
+  border-radius: 10px;
+  display:inline-block;
+  margin-top:6px;
+}
+
+/* Slippage buttons */
+.slippage-preset {
+  border: 1px solid #e6e9f2;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Swap button */
+.swap-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(90deg, #4a6cf7, #6c5ce7);
+  color: white;
+  box-shadow: 0 8px 20px rgba(76,108,247,0.18);
+}
+
+/* Small status text */
+#swapStatus {
+  font-size: 13px;
+  color: #334155;
+  margin-top: 8px;
+}
+
+/* Ensure dropdowns & other overlays appear above */
+.token-dropdown {
+  position: absolute;
+  z-index: 1400;
+}
+
+/* Mobile adjustments */
+@media (max-width: 520px) {
+  .trade-screen {
+    max-height: 86vh;
+    padding: 12px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+  }
+
+  .amount-input {
+    font-size: 22px;
+    padding: 12px;
+  }
+
+  .token-selector-btn {
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+}
+
+/* Optional: subtle handle so user knows it's draggable */
+.trade-screen::before {
+  content: "";
+  width: 44px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(52, 64, 132, 0.08);
+  display:block;
+  margin: 6px auto 8px;
+}
+/* Home Navigation Styles */
+#homeNavigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: transparent;
+}
+
+
+.nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch; /* Same height */
+    width: 100%;
+    max-width: 420px;
+    gap: 12px;
+    height: 80px; /* Fixed height for all */
+}
+
+.app-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    min-height: 80px; /* Same height */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Different colors for each button */
+.nav-row .app-btn:nth-child(1) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.nav-row .app-btn:nth-child(2) {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.nav-row .app-btn:nth-child(3) {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.app-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.app-btn:active {
+    transform: translateY(-1px);
+}
+
+.btn-icon {
+    font-size: 22px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+}
+
+.btn-text {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* Ensure all buttons have exactly the same dimensions */
+.app-btn {
+    min-width: 0; /* Allow equal distribution */
+    width: 100%; /* Take equal width */
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .nav-row {
+        gap: 10px;
+        max-width: 100%;
+        height: 75px;
+    }
+    
+    .app-btn {
+        padding: 10px 6px;
+        min-height: 75px;
+        border-radius: 14px;
+    }
+    
+    .btn-icon {
+        font-size: 20px;
+        height: 22px;
+    }
+    
+    .btn-text {
+        font-size: 12px;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 360px) {
+    .nav-row {
+        height: 70px;
+        gap: 8px;
+    }
+    
+    .app-btn {
+        min-height: 70px;
+        padding: 8px 4px;
+    }
+    
+    .btn-icon {
+        font-size: 18px;
+        height: 20px;
+    }
+    
+    .btn-text {
+        font-size: 11px;
+    }
+}
+
+/* Animation for better visual feedback */
+.app-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.app-btn:hover::before {
+    left: 100%;
+}
+
+
+#pinSetupModal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#pinSetupModal.active {
+  display: flex;
+}
+    /* Screen Management */
+    .screen{padding:30px;display:none}
+    .screen.active{display:block}
+    #newTokenAddress {
+  transition: border-color 0.3s;
+}
+#tokenStatusIcon {
+  transition: color 0.3s ease;
+}
+    /* Typography */
+    h3{text-align:center;margin-bottom:25px;color:#333;font-size:24px;font-weight:600}
+    h4{margin:0 0 8px 0;color:#333}
+    label{display:block;margin:15px 0 8px;color:#555;font-weight:500}
+    .muted{color:#666;font-size:13px}
+    
+    /* Form Elements */
+    textarea,input{width:100%;padding:12px 15px;border:2px solid #ddd;border-radius:10px;font-size:16px;transition:all 0.3s;resize:none}
+    textarea:focus,input:focus{border-color:#4a6cf7;outline:none;box-shadow:0 0 0 3px rgba(74,108,247,0.2)}
+    
+    /* Buttons */
+    button{padding:14px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s;margin-top:10px;width:100%}
+    .small-btn{padding:6px 10px;font-size:14px;border-radius:6px;width:auto}
+    .btn-ghost{background:#f4f6fb;color:#333}
+    .secondary{background:#f0f4ff;color:#333;border:1px solid #dbe6ff}
+    .danger{background:#ff6b6b}
+    .green{background:#28a745}
+    
+    /* Import/Create Screen Specific */
+    .import-wallet-btn{background:#4a6cf7;color:white}
+    .import-wallet-btn:hover{background:#3a5ce5;transform:translateY(-2px)}
+    
+    .import-wallet-divider{text-align:center;margin:20px 0;color:#777;font-weight:500;position:relative}
+    .import-wallet-divider::before{content:"";position:absolute;top:50%;left:0;width:42%;height:1px;background:#ddd}
+    .import-wallet-divider::after{content:"";position:absolute;top:50%;right:0;width:42%;height:1px;background:#ddd}
+    
+    .create-new-wallet-btn{background:#f8f9fa;color:#333;border:2px solid #ddd}
+    .create-new-wallet-btn:hover{background:#e9ecef;transform:translateY(-2px)}
+    
+    /* Account Generated Screen */
+    .success-animation{text-align:center;margin-bottom:20px}
+    .success-animation i{font-size:50px;color:#28a745;animation:pulse 1.5s infinite}
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    
+    .key-display{background:#f8f9fa;border:2px solid #ddd;border-radius:10px;padding:15px;margin:15px 0;position:relative}
+    .key-title{font-size:14px;color:#777;margin-bottom:8px}
+    .key-value{font-family:monospace;font-size:18px;font-weight:bold;color:#333;word-break:break-all}
+    .copy-btn{position:absolute;top:15px;right:15px;background:#4a6cf7;color:white;width:auto;padding:8px 12px;font-size:14px;border-radius:6px}
+    .copy-btn:hover{background:#3a5ce5}
+    
+    .warning-box{background:#fff3cd;border:1px solid #ffeaa7;border-radius:10px;padding:15px;margin:20px 0;color:#856404}
+    .warning-box h4{margin-bottom:8px;font-size:16px}
+    
+    .use-account-btn{background:#28a745;color:white;margin-top:20px}
+    .use-account-btn:hover{background:#218838;transform:translateY(-2px)}
+    
+    .back-btn{background:transparent;color:#4a6cf7;border:2px solid #4a6cf7;margin-top:15px}
+    .back-btn:hover{background:#f0f4ff}
+
+    /* Lock Screen Styles */
+    .lock-screen {
+      padding: 30px;
+      text-align: center;
+    }
+/* Token Input Validation Styles */
+#newTokenAddress.valid {
+    border-color: var(--success) !important;
+    background-color: #f8fff9;
+}
+
+#newTokenAddress.invalid {
+    border-color: var(--danger) !important;
+    background-color: #fff5f5;
+}
+
+#tokenStatusIcon {
+    transition: all 0.3s ease;
+    font-size: 16px;
+    margin-left: 8px;
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+   /* ===== BOTTOM NAVIGATION ===== */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 14px 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    border-top: 1px solid var(--gray-light);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--gray);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .nav-item.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-4px);
+  }
+
+  .nav-item i {
+    font-size: 20px;
+    margin-bottom: 2px;
+  }
+
+  .nav-item span {
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+
+
+#homeNavigation,
+.bottom-nav,
+.trade-sub-nav {
+  display: none;       /* hide default */
+  visibility: hide;  /* hide */
+           /* fade hidden */
+}
+
+    .trade-screen {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 18px;
+      margin: 20px auto;
+      padding: 20px;
+      display: block;
+      position: relative;
+      z-index: 1000;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .swap-input {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+    
+    .swap-input label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .input-with-selector {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .amount-input {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+      transition: all 0.3s;
+    }
+    
+    .amount-input:focus {
+      border-color: #4a6cf7;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
+    }
+    
+    .token-selector {
+      position: relative;
+      display: inline-block;
+      width: 120px;
+    }
+    
+    .token-selector-btn {
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    
+    .token-selector-btn:hover {
+      border-color: #4a6cf7;
+    }
+    
+    .token-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .token-dropdown.active {
+      display: block;
+    }
+    
+    .token-option {
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    
+    .token-option:hover {
+      background: #f0f4ff;
+    }
+    
+    .token-option:last-child {
+      border-bottom: none;
+    }
+    
+    .token-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    
+    .token-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+    
+    .token-symbol {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+    }
+    
+    .token-name {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .token-balance-info {
+      text-align: right;
+    }
+    
+    .token-balance {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+    }
+    
+    .token-usd-value {
+      font-size: 10px;
+      color: #999;
+    }
+    
+    .balance-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .balance-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .balance-action-btn {
+      background: #f0f4ff;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      color: #4a6cf7;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .balance-action-btn:hover {
+      background: #4a6cf7;
+      color: white;
+    }
+    
+    .swap-arrow {
+      text-align: center;
+      margin: 10px 0;
+    }
+    
+    .swap-arrow-btn {
+      background: #f0f4ff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      color: #4a6cf7;
+      font-size: 16px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .swap-arrow-btn:hover {
+      background: #4a6cf7;
+      color: white;
+      transform: rotate(180deg);
+    }
+    
+    .swap-btn {
+      padding: 16px;
+      background: #4a6cf7;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 15px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .swap-btn:hover:not(:disabled) {
+      background: #3a5ce5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(58, 92, 229, 0.3);
+    }
+    
+    .swap-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    #swapStatus {
+      min-height: 20px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      background: #f8f9fa;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    
+    #priceInfo {
+      padding: 8px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      text-align: center;
+      margin: 10px 0;
+      font-size: 13px;
+      color: #4a6cf7;
+      font-weight: 500;
+    }
+  
+  
+  
+  /* ===== TRADE SUB NAVIGATION ===== */
+  .trade-sub-nav {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    display: flex;
+    padding: 16px;
+    gap: 10px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    border-top: 1px solid var(--gray-light);
+    z-index: 999;
+    backdrop-filter: blur(10px);
+  }
+
+  .trade-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    border: 2px solid var(--gray-light);
+    border-radius: 12px;
+    background: var(--light);
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--gray);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .trade-btn.active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(74, 108, 247, 0.2);
+  }
+
+  .trade-btn i {
+    font-size: 18px;
+  }
+
+  .trade-btn span {
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+    .pin-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    
+    .pin-digit {
+      width: 50px;
+      height: 50px;
+      text-align: center;
+      font-size: 24px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    
+    .pin-digit:focus {
+      border-color: #4a6cf7;
+      outline: none;
+      transform: scale(1.05);
+    }
+    
+    .pin-digit.filled {
+      border-color: #28a745;
+      background-color: #f8fff9;
+    }
+    
+    .lock-btn {
+      background: #4a6cf7;
+      color: white;
+      margin-top: 15px;
+    }
+    
+    .lock-btn:hover {
+      background: #3a5ce5;
+    }
+    
+    .lock-header {
+      margin-bottom: 30px;
+    }
+
+    /* PIN Setup Modal Styles */
+    .pin-setup-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .pin-setup-modal.active {
+      display: flex;
+    }
+
+    .pin-setup-card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .pin-setup-header {
+      margin-bottom: 25px;
+    }
+
+    .pin-setup-header i {
+      font-size: 48px;
+      color: #4a6cf7;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .pin-setup-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .pin-setup-subtitle {
+      color: #666;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .pin-setup-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 25px 0;
+    }
+
+    .pin-setup-digit {
+      width: 44px;
+      height: 44px;
+      text-align: center;
+      font-size: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-weight: bold;
+      transition: all 0.3s;
+      background: #fafafa;
+    }
+
+    .pin-setup-digit:focus {
+      border-color: #4a6cf7;
+      background: white;
+      outline: none;
+      transform: scale(1.1);
+    }
+
+    .pin-setup-digit.filled {
+      border-color: #28a745;
+      background: #f0fff4;
+    }
+
+    .pin-setup-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .pin-setup-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .pin-setup-cancel {
+      background: #f8f9fa;
+      color: #666;
+      border: 2px solid #e0e0e0;
+    }
+
+    .pin-setup-cancel:hover {
+      background: #e9ecef;
+    }
+
+    .pin-setup-confirm {
+      background: #4a6cf7;
+      color: white;
+    }
+
+    .pin-setup-confirm:hover {
+      background: #3a5ce5;
+      transform: translateY(-2px);
+    }
+
+    .pin-setup-confirm:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .pin-setup-step {
+      font-size: 13px;
+      color: #4a6cf7;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .pin-setup-hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+  
+  /* Fingerprint Scanner Styles */
+  .fingerprint-scanner {
+    width: 120px;
+    height: 120px;
+    margin: 20px auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a6cf7, #6c5ce7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 25px rgba(74, 108, 247, 0.3);
+  }
+  
+  .fingerprint-scanner.active {
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 10px 30px rgba(74, 108, 247, 0.5);
+  }
+  
+  .fingerprint-scanner i {
+    font-size: 48px;
+    color: white;
+  }
+  
+  .fingerprint-scanner::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    animation: ripple 2s infinite;
+  }
+  
+  .fingerprint-scanner::after {
+    content: '';
+    position: absolute;
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+  
+  @keyframes ripple {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+  
+  .fingerprint-status {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #666;
+    min-height: 20px;
+  }
+  
+  .fingerprint-success {
+    color: #28a745;
+  }
+  
+  .fingerprint-error {
+    color: #ff6b6b;
+  }
+  
+  .fingerprint-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .fingerprint-option:hover {
+    background: #f8f9fa;
+    border-color: #4a6cf7;
+  }
+  
+  .fingerprint-option.active {
+    background: #f0f4ff;
+    border-color: #4a6cf7;
+  }
+  
+  .fingerprint-icon {
+    font-size: 20px;
+    color: #4a6cf7;
+  }
+  
+  .unlock-options {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  .unlock-option-title {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  /* Confirmation Modal Styles */
+  .confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+  }
+
+  .confirm-modal.active {
+    display: flex;
+  }
+
+  .confirm-modal-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .confirm-modal-header {
+    margin-bottom: 25px;
+  }
+
+  .confirm-modal-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .warning-icon {
+    color: #ff6b6b;
+  }
+
+  .lock-icon {
+    color: #4a6cf7;
+  }
+
+  .confirm-modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+  }
+
+  .confirm-modal-message {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .confirm-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .confirm-modal-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .confirm-modal-cancel {
+    background: #f8f9fa;
+    color: #666;
+    border: 2px solid #e0e0e0;
+  }
+
+  .confirm-modal-cancel:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+  }
+
+  .confirm-modal-confirm {
+    background: #ff6b6b;
+    color: white;
+  }
+
+  .confirm-modal-confirm:hover {
+    background: #e55a5a;
+    transform: translateY(-2px);
+  }
+
+  .lock-confirm-btn {
+    background: #4a6cf7;
+  }
+
+  .lock-confirm-btn:hover {
+    background: #3a5ce5;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .shake {
+    animation: shake 0.4s ease-in-out;
+  }
+  
+  /* ===== DASHBOARD ===== */
+  .dashboard-container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    margin: 0 auto;
+    box-shadow: var(--shadow-lg);
+  }
+.network-btn {
+  padding: 6px 12px;
+  margin-right: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.network-btn.active {
+  background-color: #4a6cf7;
+  color: white;
+}
+  .dashboard-container.active {
+    display: flex;
+  }
+
+  .wallet-box {
+    background: var(--light);
+    padding: 24px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .wallet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .wallet-info {
+    text-align: center;
+    flex: 1;
+  }
+
+  .wallet-address {
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 8px;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+
+  .balance-section {
+    text-align: center;
+    margin: 24px 0;
+  }
+
+  .balance-amount {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 8px 0;
+  }
+
+  .balance-usd {
+    color: var(--gray);
+    font-size: 16px;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  /* ===== ASSETS LIST ===== */
+  .assets-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .assets-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .assets-list::-webkit-scrollbar-track {
+    background: var(--light);
+    border-radius: 10px;
+  }
+
+  .assets-list::-webkit-scrollbar-thumb {
+    background: var(--gray-light);
+    border-radius: 10px;
+  }
+
+  .asset-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--gray-light);
+    transition: var(--transition);
+    position: relative;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+  }
+
+  .asset-item:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  .asset-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient);
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 16px;
+    margin-right: 16px;
+    flex-shrink: 0;
+    color: var(--white);
+  }
+
+  .asset-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .asset-details {
+    flex: 1;
+  }
+
+  .asset-name {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 16px;
+  }
+
+  .asset-symbol {
+    font-size: 13px;
+    color: var(--gray);
+  }
+
+  .asset-balance {
+    text-align: right;
+    margin-left: 12px;
+  }
+
+  .asset-amount {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 16px;
+  }
+
+  .asset-value {
+    font-size: 13px;
+    color: var(--gray);
+  }
+
+  /* ===== MODALS ===== */
+  .modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+  }
+
+  .modal.active {
+    display: flex;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .modal-card {
+    background: var(--white);
+    padding: 28px;
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  
+  .wizard-steps {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .step {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #f4f6fb;
+    font-size: 14px;
+  }
+
+  .step.active {
+    background: #4a6cf7;
+    color: #fff;
+  }
+
+  .tx-loading {
+    opacity: .9;
+    padding: 10px;
+    border-radius: 8px;
+    background: #fff8e6;
+    color: #856404;
+  }
+
+  .transactions-list {
+    max-height: 160px;
+    overflow: auto;
+  }
+
+  .hint {
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+  }
+
+  .wallet-box .row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .wallet-box .row input#newTokenAddress {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .wallet-box .row input#newTokenSymbol {
+    width: 80px;
+  }
+
+  .wallet-box .row input#newTokenDecimals {
+    width: 60px;
+  }
+
+  .wallet-box .row button#addTokenBtn {
+    flex-shrink: 0;
+  }
+
+  /* Mobile-specific adjustments */
+  @media (max-width: 480px) {
+    .wallet-box .row input#newTokenAddress {
+      width: 100%;
+    }
+    .wallet-box .row input#newTokenSymbol,
+    .wallet-box .row input#newTokenDecimals,
+    .wallet-box .row button#addTokenBtn {
+      width: 48%;
+      margin-top: 5px;
+    }
+
+    .pin-setup-digit {
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+    }
+  }
+
+  </style>
+</head>
+<body>
+  <!-- PIN Setup Modal -->
+  <div class="pin-setup-modal" id="pinSetupModal">
+    <div class="pin-setup-card">
+      <div class="pin-setup-header">
+        <i class="fas fa-shield-alt"></i>
+        <div class="pin-setup-title">Set Up Wallet Security</div>
+        <div class="pin-setup-subtitle">Create a 6-digit PIN to secure your wallet</div>
+      </div>
+
+      <div id="pinSetupStep1">
+        <div class="pin-setup-step">STEP 1: CREATE YOUR PIN</div>
+        <div class="pin-setup-inputs">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="0" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="1" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="2" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="3" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="4" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="5" inputmode="numeric">
+        </div>
+        <div class="pin-setup-hint" id="pinHint1">Enter 6 digits for your PIN</div>
+      </div>
+
+      <div id="pinSetupStep2" style="display: none;">
+        <div class="pin-setup-step">STEP 2: CONFIRM YOUR PIN</div>
+        <div class="pin-setup-inputs">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="0" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="1" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="2" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="3" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="4" inputmode="numeric">
+          <input type="password" class="pin-setup-digit" maxlength="1" data-index="5" inputmode="numeric">
+        </div>
+        <div class="pin-setup-hint" id="pinHint2">Re-enter your PIN to confirm</div>
+      </div>
+
+      <div class="pin-setup-actions">
+        <button id="pinSetupCancel" class="pin-setup-btn pin-setup-cancel">Cancel</button>
+        <button id="pinSetupConfirm" class="pin-setup-btn pin-setup-confirm" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fingerprint Setup Modal -->
+  <div class="confirm-modal" id="fingerprintSetupModal">
+    <div class="confirm-modal-card">
+      <div class="confirm-modal-header">
+        <i class="fas fa-fingerprint confirm-modal-icon" style="color: #4a6cf7;"></i>
+        <div class="confirm-modal-title">Enable Fingerprint Unlock</div>
+        <div class="confirm-modal-message">
+          Would you like to enable fingerprint authentication for faster access to your wallet?
+          <br><br>
+          <strong>Note:</strong> This is a simulated fingerprint scanner for demonstration purposes.
+        </div>
+      </div>
+      <div class="confirm-modal-actions">
+        <button id="fingerprintSetupCancel" class="confirm-modal-btn confirm-modal-cancel">Skip</button>
+        <button id="fingerprintSetupConfirm" class="confirm-modal-btn confirm-modal-confirm lock-confirm-btn">Enable</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot PIN Confirmation Modal -->
+  <div class="confirm-modal" id="forgotPinModal">
+    <div class="confirm-modal-card">
+      <div class="confirm-modal-header">
+        <i class="fas fa-exclamation-triangle confirm-modal-icon warning-icon"></i>
+        <div class="confirm-modal-title">Forgot PIN?</div>
+        <div class="confirm-modal-message">
+          Haddii aad illowdo PIN-ka, waxaad waayi doontaa access-ka wallet-ka.<br>
+          <strong>Ma rabtaa inaad bilowdo mid cusub?</strong>
+        </div>
+      </div>
+      <div class="confirm-modal-actions">
+        <button id="forgotPinCancel" class="confirm-modal-btn confirm-modal-cancel">Cancel</button>
+        <button id="forgotPinConfirm" class="confirm-modal-btn confirm-modal-confirm">Yes, Start Over</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lock Wallet Confirmation Modal -->
+  <div class="confirm-modal" id="lockWalletModal">
+    <div class="confirm-modal-card">
+      <div class="confirm-modal-header">
+        <i class="fas fa-lock confirm-modal-icon lock-icon"></i>
+        <div class="confirm-modal-title">Lock Wallet?</div>
+        <div class="confirm-modal-message">
+          Ma hubtaa inaad xidhayso wallet-ka?<br>
+          Waa inaad geli doontaa PIN-ka mar kale si aad u furto.
+        </div>
+      </div>
+      <div class="confirm-modal-actions">
+        <button id="lockWalletCancel" class="confirm-modal-btn confirm-modal-cancel">Cancel</button>
+        <button id="lockWalletConfirm" class="confirm-modal-btn confirm-modal-confirm lock-confirm-btn">Yes, Lock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lock Screen -->
+  <div class="container">
+    <div class="screen" id="lockScreen">
+      <div class="lock-screen">
+        <div class="lock-header">
+          <i class="fas fa-lock" style="font-size: 48px; color: #4a6cf7; margin-bottom: 20px;"></i>
+          <h3>Laam Wallet Locked</h3>
+          <p class="muted">Enter your PIN to unlock</p>
+        </div>
+        
+        <div class="pin-inputs">
+          <input type="password" class="pin-digit" maxlength="1" data-index="0" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" data-index="1" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" data-index="2" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" data-index="3" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" data-index="4" inputmode="numeric">
+          <input type="password" class="pin-digit" maxlength="1" data-index="5" inputmode="numeric">
+        </div>
+        
+        <button id="unlockWalletBtn" class="lock-btn">
+          <i class="fas fa-unlock"></i> Unlock Wallet
+        </button>
+        
+        <!-- Fingerprint Scanner -->
+        <div id="fingerprintSection" style="display: active;">
+          <div class="unlock-options">
+            <div class="unlock-option-title">Or unlock with</div>
+            <div class="fingerprint-scanner" id="fingerprintScanner">
+              <i class="fas fa-fingerprint"></i>
+            </div>
+            <div class="fingerprint-status" id="fingerprintStatus"></div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <button id="forgotPinBtn" class="small-btn btn-ghost">
+            Forgot PIN?
+          </button>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- Import/Create Wallet Screen -->
+    <div class="screen" id="importWalletScreen">
+      <h3><i class="fas fa-key"></i> Import or Create BSC Wallet</h3>
+      <label>Private Key:</label>
+      <textarea id="privateKeyInput" placeholder="Enter your private key starting with 0x..." rows="3"></textarea>
+      <button id="importWalletBtn" class="import-wallet-btn">
+        <i class="fas fa-download"></i> Import Wallet and Save
+      </button>
+      <div class="import-wallet-divider">or</div>
+      <button id="createNewWalletBtn" class="create-new-wallet-btn">
+        <i class="fas fa-plus-circle"></i> Create New Wallet
+      </button>
+    </div>
+
+    <div class="screen" id="accountGeneratedScreen">
+      <div class="success-animation">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3>BSC Wallet Created</h3>
+      <div class="key-display">
+        <div class="key-title">Private Key (Keep Secret!)</div>
+        <div class="key-value" id="secretKeyDisplay">Your private key will appear here</div>
+        <button class="copy-btn" id="copySecretKeyBtn"><i class="fas fa-copy"></i> COPY</button>
+      </div>
+      <div class="key-display">
+        <div class="key-title">Wallet Address</div>
+        <div class="key-value" id="publicKeyDisplay">Your wallet address will appear here</div>
+        <button class="copy-btn" id="copyPublicKeyBtn"><i class="fas fa-copy"></i> COPY</button>
+      </div>
+      <div class="warning-box">
+        <h4><i class="fas fa-exclamation-triangle"></i> IMPORTANT</h4>
+        <p>Save your Private Key in a secure place!</p>
+      </div>
+      <button id="useAccountBtn" class="use-account-btn">
+        <i class="fas fa-wallet"></i> USE THIS WALLET
+      </button>
+      <button id="backToImportBtn" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Import
+      </button>
+    </div>
+  </div>
+  <!-- Main Wallet Dashboard -->
+  <div class="dashboard-container" id="mainDashboard">
+    <!-- LEFT: Wallet controls -->
+<!-- Network Switch -->
+<div id="networkSwitchContainer" style="margin-bottom:10px;">
+  <button id="networkBSC" class="network-btn active">BSC</button>
+  <button id="networkBase" class="network-btn">Base</button>
+</div>
+    <div class="col" id="leftCol">
+      <div class="wallet-header">
+        <div class="wallet-info">
+          <h3><i class="fas fa-wallet"></i> Laam Wallet (Mainnet)</h3>
+          <div class="wallet-address" id="walletAddress">—</div>
+          <button id="copyAddressBtn" class="small-btn" style="margin-top: 5px;">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <button id="lockWalletBtn" class="small-btn btn-ghost">
+          <i class="fas fa-lock"></i> Lock
+        </button>
+      </div>
+
+      <!-- Current Wallet Info -->
+      <div class="wallet-box">
+        <div class="balance-section">
+          <div class="muted">Total Balance</div>
+          <div class="balance-amount" id="totalBalance">0 BNB</div>
+          <div class="balance-usd" id="balanceUSD">$0</div>
+        </div>
+        <div class="actions">
+          <button id="sendBtnWallet" class="small-btn">
+            <i class="fas fa-paper-plane"></i> Send
+          </button>
+          <button id="receiveBtnWallet" class="small-btn secondary">
+            <i class="fas fa-qrcode"></i> Receive
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Assets & Transactions -->
+    <div class="col" id="rightCol">
+      <h3>Assets</h3>
+      <div id="assetsList" class="assets-list">
+    <div id="tokenList">Loading...</div>
+</div>
+
+      <div class="wallet-box">
+        <label>Add Token </label>
+        <div class="row">
+          <input id="newTokenAddress" placeholder="Contract address" />
+          <input id="newTokenSymbol" placeholder="SYMB" />
+          <input id="newTokenDecimals" placeholder="dec" />
+          <button id="addTokenBtn" class="small-btn">Add token</button>
+        </div>
+      </div>
+
+      <!-- Transactions history -->
+      <div class="wallet-box">
+        <h4 style="margin:0 0 8px 0">Transaction History </h4>
+        <div class="transactions-list" id="transactionsList">
+          <div class="muted small"></div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button id="clearHistoryBtn" class="small-btn btn-ghost">Clear</button>
+          <button id="refreshBalancesBtn" class="small-btn">Refresh</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- HOME NAVIGATION -->
+<div class="container" id="homeNavigation">
+    <div class="app-btn" onclick="openInApp('https://wallet.laam.online')">
+        <i class="fas fa-wallet"></i><br>Wallet
+    </div>
+
+    <div class="app-btn" onclick="openInApp('https://p2p.laam.online')">
+        💱<br>P2P
+    </div>
+
+    <div class="app-btn" onclick="openInApp('https://whitepaper.laam.online')">
+        📜<br>Whitepaper
+    </div>
+</div>
+
+<!-- Iframe container for in-app browsing -->
+<div id="iframeContainer" style="display:none; width:100%; height:calc(100vh - 80px); margin-top:10px; border-radius:12px; overflow:hidden;"></div>
+
+<!-- Bottom Navigation Bar -->
+<div class="bottom-nav" id="bottomNav">
+  <div class="nav-item active" data-tab="home">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+  </div>
+  <div class="nav-item" data-tab="trade">
+    <i class="fas fa-exchange-alt"></i>
+    <span>Trade</span>
+  </div>
+  <div class="nav-item" data-tab="wallet">
+    <i class="fas fa-wallet"></i>
+    <span>Wallet</span>
+  </div>
+</div>
+
+<!-- Trade Sub Navigation -->
+<div class="trade-sub-nav" id="tradeSubNav" style="display: none;">
+  <button class="trade-btn active" data-type="swap">
+    <i class="fas fa-sync-alt"></i>
+    <span>Swap</span>
+  </button>
+  <button class="trade-btn" data-type="limit">
+    <i class="fas fa-chart-line"></i>
+    <span>Limit</span>
+  </button>
+  <button class="trade-btn" data-type="perps">
+    <i class="fas fa-rocket"></i>
+    <span>Perps</span>
+  </button>
+</div>
+
+<!-- Trade Screen Container -->
+<div id="tradeScreenContainer"></div>
+
+  <!-- SEND Modal (3-step wizard UI) -->
+  <div id="sendModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h4 style="margin:0">Send</h4>
+        <button id="closeSendModal" class="small-btn btn-ghost">X</button>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="wizard-steps">
+          <div class="step active" data-step="1">1 Amount</div>
+          <div class="step" data-step="2">2 Recipient</div>
+          <div class="step" data-step="3">3 Confirm</div>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="step1" class="step-panel">
+          <label>Enter Amount</label>
+          <input id="sendAmount" placeholder="0.00" />
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <div class="row" style="gap:8px;align-items:center">
+              <button class="small-btn btn-ghost quick-amount" data-amount="0.001">0.001</button>
+              <button class="small-btn btn-ghost quick-amount" data-amount="0.01">0.01</button>
+              <button class="small-btn btn-ghost quick-amount" data-amount="0.1">0.1</button>
+            </div>
+
+            <select id="sendCurrency" style="margin-left:auto;padding:6px;border-radius:8px">
+              <option value="BNB">BNB</option>
+            </select>
+          </div>
+
+          <div class="hint" style="margin-top:8px">Available: <span id="availableBalance">0 BNB</span></div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button id="cancelSendBtn" class="small-btn btn-ghost">Cancel</button>
+            <button id="step1Next" class="small-btn">Next</button>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="step2" class="step-panel" style="display:none;margin-top:10px">
+          <label>Recipient Address</label>
+          <input id="recipientAddress" placeholder="0x..." />
+          <div class="hint"></div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button id="step2Back" class="small-btn btn-ghost">Back</button>
+            <button id="step2Next" class="small-btn">Next</button>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="step3" class="step-panel" style="display:none;margin-top:10px">
+          <h4>confirm</h4>
+          <div style="margin-top:8px">
+            <div class="asset-item">
+              <div>Amount</div>
+              <div id="confirmAmount">0 BNB</div>
+            </div>
+            <div class="asset-item">
+              <div>To</div>
+              <div id="confirmAddress" style="font-family:monospace">—</div>
+            </div>
+            <div class="asset-item">
+              <div>Fee (est)</div>
+              <div id="confirmFee">estimating...</div>
+            </div>
+            <div style="margin-top:8px" id="txNotice" class="muted small"></div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button id="step3Back" class="small-btn btn-ghost">Back</button>
+            <button id="confirmSendBtn" class="small-btn green">Confirm & Send</button>
+          </div>
+
+          <div id="sendProgress" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIVE Modal -->
+  <div id="receiveModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h4 style="margin:0">Receive — QR & Address</h4>
+        <button id="closeReceiveModal" class="small-btn btn-ghost">X</button>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div id="qrcode" style="width:160px;height:160px;background:#fff;padding:8px;border-radius:8px"></div>
+          <div style="flex:1">
+            <div class="muted">Your address</div>
+            <div id="receiveAddress" style="font-family:monospace;font-weight:800;margin-top:6px">—</div>
+            <div style="margin-top:12px" class="actions">
+              <button id="copyReceiveAddr" class="small-btn">Copy</button>
+              <button id="downloadQR" class="small-btn btn-ghost">Download QR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+/* ========== Global & Init ========== */
+let web3BSC = new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/"));
+let web3Base = new Web3(new Web3.providers.HttpProvider("https://base-mainnet.public.blastapi.io"));
+let currentNetwork = "BSC"; // default
+let currentWeb3 = web3BSC;
+
+const tokenABI = [
+  {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
+  {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+  {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"},
+  {"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"type":"function"}
+];
+
+const ENCRYPTION_KEY = "laam_wallet_secure_key";
+let currentPrivateKey = null;
+let currentAddress = null;
+let tokens = JSON.parse(localStorage.getItem("laam_tokens_v2") || "[]");
+let pinSetupStep = 1;
+let firstPIN = '';
+let fingerprintEnabled = localStorage.getItem("laam_fingerprint_enabled") === "true";
+let autoRefreshEnabled = false;
+
+
+/* ====== DOM References ====== */
+// Modals
+const forgotPinModal = document.getElementById('forgotPinModal');
+const forgotPinCancel = document.getElementById('forgotPinCancel');
+const forgotPinConfirm = document.getElementById('forgotPinConfirm');
+const lockWalletModal = document.getElementById('lockWalletModal');
+const lockWalletCancel = document.getElementById('lockWalletCancel');
+const lockWalletConfirm = document.getElementById('lockWalletConfirm');
+
+/* ====== DOM References ====== */
+// Network switch buttons
+const networkBSCBtn = document.getElementById("networkBSC");
+const networkBaseBtn = document.getElementById("networkBase");
+
+// Fingerprint
+const fingerprintSetupModal = document.getElementById('fingerprintSetupModal');
+const fingerprintSetupCancel = document.getElementById('fingerprintSetupCancel');
+const fingerprintSetupConfirm = document.getElementById('fingerprintSetupConfirm');
+const fingerprintSection = document.getElementById('fingerprintSection');
+const fingerprintScanner = document.getElementById('fingerprintScanner');
+const fingerprintStatus = document.getElementById('fingerprintStatus');
+
+// PIN setup
+const pinSetupModal = document.getElementById('pinSetupModal');
+const pinSetupStep1 = document.getElementById('pinSetupStep1');
+const pinSetupStep2 = document.getElementById('pinSetupStep2');
+const pinSetupDigits1 = pinSetupStep1.querySelectorAll('.pin-setup-digit');
+const pinSetupDigits2 = pinSetupStep2.querySelectorAll('.pin-setup-digit');
+const pinHint1 = document.getElementById('pinHint1');
+const pinHint2 = document.getElementById('pinHint2');
+const pinSetupCancel = document.getElementById('pinSetupCancel');
+const pinSetupConfirm = document.getElementById('pinSetupConfirm');
+
+// Lock screen
+const lockScreen = document.getElementById('lockScreen');
+const pinDigits = document.querySelectorAll('.pin-digit');
+const unlockWalletBtn = document.getElementById('unlockWalletBtn');
+const forgotPinBtn = document.getElementById('forgotPinBtn');
+const lockWalletBtn = document.getElementById('lockWalletBtn');
+
+// Screens
+const importWalletScreen = document.getElementById('importWalletScreen');
+const accountGeneratedScreen = document.getElementById('accountGeneratedScreen');
+const mainDashboard = document.getElementById('mainDashboard');
+
+// Wallet import/create
+const privateKeyInput = document.getElementById('privateKeyInput');
+const importWalletBtn = document.getElementById('importWalletBtn');
+const createNewWalletBtn = document.getElementById('createNewWalletBtn');
+
+// Account generated screen elements
+const secretKeyDisplay = document.getElementById('secretKeyDisplay');
+const publicKeyDisplay = document.getElementById('publicKeyDisplay');
+const copySecretKeyBtn = document.getElementById('copySecretKeyBtn');
+const copyPublicKeyBtn = document.getElementById('copyPublicKeyBtn');
+const useAccountBtn = document.getElementById('useAccountBtn');
+const backToImportBtn = document.getElementById('backToImportBtn');
+
+// Dashboard elements
+const walletAddressEl = document.getElementById('walletAddress');
+const totalBalanceEl = document.getElementById('totalBalance');
+const balanceUSDEl = document.getElementById('balanceUSD');
+const assetsListEl = document.getElementById('assetsList');
+const addTokenBtn = document.getElementById('addTokenBtn');
+const newTokenAddress = document.getElementById('newTokenAddress');
+const newTokenSymbol = document.getElementById('newTokenSymbol');
+const newTokenDecimals = document.getElementById('newTokenDecimals');
+const copyAddressBtn = document.getElementById('copyAddressBtn');
+
+/* Send modal refs */
+const sendModal = document.getElementById('sendModal');
+const sendBtnWallet = document.getElementById('sendBtnWallet');
+const closeSendModal = document.getElementById('closeSendModal');
+const receiveBtnWallet = document.getElementById('receiveBtnWallet');
+const receiveModal = document.getElementById('receiveModal');
+const closeReceiveModal = document.getElementById('closeReceiveModal');
+const qrcodeDiv = document.getElementById('qrcode');
+const receiveAddressEl = document.getElementById('receiveAddress');
+const copyReceiveAddr = document.getElementById('copyReceiveAddr');
+const downloadQR = document.getElementById('downloadQR');
+
+/* Wizard elements */
+const stepPanels = {1: document.getElementById('step1'), 2: document.getElementById('step2'), 3: document.getElementById('step3')};
+const stepButtons = { next1: document.getElementById('step1Next'), next2: document.getElementById('step2Next'),
+                      back2: document.getElementById('step2Back'), back3: document.getElementById('step3Back'),
+                      cancelSendBtn: document.getElementById('cancelSendBtn'), confirmSendBtn: document.getElementById('confirmSendBtn')
+                    };
+const sendAmountInput = document.getElementById('sendAmount');
+const sendCurrencySelect = document.getElementById('sendCurrency');
+const recipientAddressInput = document.getElementById('recipientAddress');
+const availableBalanceEl = document.getElementById('availableBalance');
+const confirmAmountEl = document.getElementById('confirmAmount');
+const confirmAddressEl = document.getElementById('confirmAddress');
+const confirmFeeEl = document.getElementById('confirmFee');
+const sendProgressEl = document.getElementById('sendProgress');
+const txNoticeEl = document.getElementById('txNotice');
+const transactionsListEl = document.getElementById('transactionsList');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+const refreshBalancesBtn = document.getElementById('refreshBalancesBtn');
+   
+
+ /* ========== Network Switching ========== */
+function switchNetwork(network) {
+    currentNetwork = network;
+    currentWeb3 = network === "BSC" ? web3BSC : web3Base;
+
+    // Toggle button UI
+    networkBSCBtn.classList.toggle("active", network === "BSC");
+    networkBaseBtn.classList.toggle("active", network === "Base");
+
+    console.log("Switched to", currentNetwork);
+
+    // Update network header
+    updateNetworkHeader();
+
+    // ❌ Ha wicin updateWalletUI halkaan — waxuu sababayaa duplicate rows
+    // Auto-refresh ayaa si toos ah u refresh-gareynaya
+}
+
+// Event listeners for buttons
+networkBSCBtn.addEventListener("click", () => switchNetwork("BSC"));
+networkBaseBtn.addEventListener("click", () => switchNetwork("Base"));
+
+// Update network header function
+function updateNetworkHeader() {
+    const headerEl = document.querySelector("#leftCol .wallet-header h3");
+    let netLabel = currentNetwork === "BSC" ? "BSC Mainnet" : "Base Mainnet";
+    headerEl.innerHTML = `<i class="fas fa-wallet"></i> Laam Wallet (${netLabel})`;
+}
+// Refresh trade screen if active
+  const tradeScreen = document.getElementById('tradeScreen');
+  const tradeSubNav = document.getElementById('tradeSubNav');
+  if (tradeScreen && tradeSubNav.style.display !== 'none') {
+    createRealTradeScreen(); // Use real trade screen
+  }
+
+  
+/* ========== Fingerprint Functions (Real WebAuthn Biometric) ========== */
+
+function showFingerprintSetup() {
+  fingerprintSetupModal.classList.add('active');
+}
+
+function closeFingerprintSetup() {
+  fingerprintSetupModal.classList.remove('active');
+}
+
+/* ========== Fingerprint Functions (Real WebAuthn Biometric) ========== */
+
+// --- Base64 helpers ---
+function bufToBase64Url(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlToBuf(base64url) {
+  const pad = '='.repeat((4 - base64url.length % 4) % 4);
+  const b64 = (base64url + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const str = atob(b64);
+  return Uint8Array.from(str, c => c.charCodeAt(0)).buffer;
+}
+
+// --- Key derivation ---
+async function deriveKeyFromCredentialId(credId) {
+  const idBuf = base64UrlToBuf(credId);
+  const hash = await crypto.subtle.digest('SHA-256', idBuf);
+  return crypto.subtle.importKey("raw", hash, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
+
+// --- AES Encrypt/Decrypt ---
+async function encryptPrivKey(priv, key) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder().encode(priv);
+  const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc);
+  const joined = new Uint8Array(iv.byteLength + cipher.byteLength);
+  joined.set(iv);
+  joined.set(new Uint8Array(cipher), iv.byteLength);
+  return bufToBase64Url(joined.buffer);
+}
+
+async function decryptPrivKey(data, key) {
+  try {
+    const buf = base64UrlToBuf(data);
+    const bytes = new Uint8Array(buf);
+    const iv = bytes.slice(0, 12);
+    const cipher = bytes.slice(12);
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, cipher);
+    return new TextDecoder().decode(plain);
+  } catch(e) {
+    console.error("Decryption failed:", e);
+    return null;
+  }
+}
+
+// --- Enable Fingerprint ---
+async function enableFingerprint_WebAuthn() {
+  try {
+    if (!currentPrivateKey) { alert("Fur wallet-ka marka hore."); return; }
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const publicKey = {
+      challenge,
+      rp: { name: "Laam Wallet" },
+      user: { id: new Uint8Array(16), name: "laam_user", displayName: "Laam User" },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+      authenticatorSelection: { userVerification: "required" },
+      timeout: 60000,
+      attestation: "none"
+    };
+    const credential = await navigator.credentials.create({ publicKey });
+    const credId = bufToBase64Url(credential.rawId);
+    const aesKey = await deriveKeyFromCredentialId(credId);
+    const encryptedPriv = await encryptPrivKey(currentPrivateKey, aesKey);
+
+    localStorage.setItem("laam_fingerprint_enabled", "true");
+    localStorage.setItem("laam_webauthn_cred_id", credId);
+    localStorage.setItem("laam_webauthn_enc_priv", encryptedPriv);
+
+    alert("Fingerprint biometric si guul ah ayaa loo diiwaan geliyay!");
+    updateFingerprintUI_WebAuthn();
+    fingerprintSetupModal.classList.remove('active');
+
+  } catch (e) {
+    alert("Fingerprint enable failed: " + e.message);
+  }
+}
+
+// --- Unlock wallet via fingerprint ---
+async function unlockWithFingerprint_WebAuthn() {
+  try {
+    const credId = localStorage.getItem("laam_webauthn_cred_id");
+    const encryptedPriv = localStorage.getItem("laam_webauthn_enc_priv");
+
+    if (!credId || !encryptedPriv) {
+      fingerprintStatus.textContent = "Fingerprint lama diiwaan gelin";
+      fingerprintStatus.className = "fingerprint-status fingerprint-error";
+      return;
+    }
+
+    fingerprintScanner.classList.add("active");
+    fingerprintStatus.textContent = "Sug fingerprint...";
+
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const publicKey = {
+      challenge,
+      allowCredentials: [{ type: "public-key", id: base64UrlToBuf(credId) }],
+      userVerification: "required",
+      timeout: 60000
+    };
+
+    await navigator.credentials.get({ publicKey });
+
+    const key = await deriveKeyFromCredentialId(credId);
+    const priv = await decryptPrivKey(encryptedPriv, key);
+
+    if (priv && localStorage.getItem("laam_wallet_address")) {
+      // ✅ Set wallet directly without PIN
+      setCurrentWallet(localStorage.getItem("laam_wallet_address"), priv);
+
+      fingerprintStatus.textContent = "Wallet unlocked!";
+      fingerprintStatus.className = "fingerprint-status fingerprint-success";
+
+      // Show navigation & dashboard
+      document.getElementById("homeNavigation").style.display = "flex";
+      document.querySelector(".bottom-nav").style.display = "flex";
+      document.querySelector(".trade-sub-nav").style.display = "flex";
+
+      showScreen("dashboard");
+    } else {
+      fingerprintStatus.textContent = "Wallet data ma helin";
+      fingerprintStatus.className = "fingerprint-status fingerprint-error";
+    }
+
+  } catch (e) {
+    console.error("Fingerprint unlock error:", e);
+    fingerprintStatus.textContent = "Fingerprint failed";
+    fingerprintStatus.className = "fingerprint-status fingerprint-error";
+  } finally {
+    fingerprintScanner.classList.remove("active");
+  }
+  }
+
+// --- Update Fingerprint UI ---
+function updateFingerprintUI_WebAuthn() {
+  const enabled = localStorage.getItem("laam_fingerprint_enabled") === "true";
+  fingerprintSection.style.display = enabled ? "block" : "none";
+}
+
+// --- Event listeners ---
+fingerprintSetupConfirm.addEventListener("click", enableFingerprint_WebAuthn);
+fingerprintScanner.addEventListener("click", unlockWithFingerprint_WebAuthn);
+
+
+/* ========== Confirmation Modal Functions ========== */
+function openForgotPinModal() {
+  forgotPinModal.classList.add('active');
+}
+
+function closeForgotPinModal() {
+  forgotPinModal.classList.remove('active');
+}
+
+function openLockWalletModal() {
+  lockWalletModal.classList.add('active');
+}
+
+function closeLockWalletModal() {
+  lockWalletModal.classList.remove('active');
+}
+
+/* ========== Event Listeners for Confirmation Modals ========== */
+// Forgot PIN events
+forgotPinBtn.addEventListener('click', () => {
+  openForgotPinModal();
+});
+
+forgotPinCancel.addEventListener('click', () => {
+  closeForgotPinModal();
+});
+
+forgotPinConfirm.addEventListener('click', () => {
+  // Clear all wallet data
+  localStorage.removeItem("laam_encrypted_priv");
+  localStorage.removeItem("laam_wallet_address");
+  localStorage.removeItem("laam_pin_set");
+  localStorage.removeItem("laam_tokens_v1");
+  localStorage.removeItem("laam_tx_history");
+  localStorage.removeItem("laam_fingerprint_enabled");
+  
+  // Clear session data
+  sessionStorage.removeItem("laam_unlocked_priv");
+  sessionStorage.removeItem("laam_unlocked_addr");
+  sessionStorage.removeItem("temp_private_key");
+  sessionStorage.removeItem("temp_address");
+  
+  // Reset state
+  currentPrivateKey = null;
+  currentAddress = null;
+  tokens = [];
+  fingerprintEnabled = false;
+  
+  closeForgotPinModal();
+  showScreen('import');
+  
+  // Show success message
+  setTimeout(() => {
+    alert('🔓 Wallet reset successfully. You can now create a new wallet.');
+  }, 300);
+});
+
+// Lock Wallet events
+lockWalletBtn.addEventListener('click', () => {
+  openLockWalletModal();
+});
+
+lockWalletCancel.addEventListener('click', () => {
+  closeLockWalletModal();
+});
+
+lockWalletConfirm.addEventListener('click', () => {
+  lockWallet();
+  closeLockWalletModal();
+});
+
+/* ========== PIN Setup Functions ========== */
+function openPinSetupModal() {
+  pinSetupModal.classList.add('active');
+  resetPinSetup();
+  pinSetupDigits1[0].focus();
+}
+
+function closePinSetupModal() {
+  pinSetupModal.classList.remove('active');
+  resetPinSetup();
+}
+
+function resetPinSetup() {
+  pinSetupStep = 1;
+  firstPIN = '';
+  
+  // Clear all inputs
+  pinSetupDigits1.forEach(digit => {
+    digit.value = '';
+    digit.classList.remove('filled');
+  });
+  pinSetupDigits2.forEach(digit => {
+    digit.value = '';
+    digit.classList.remove('filled');
+  });
+  
+  // Reset UI
+  pinSetupStep1.style.display = 'block';
+  pinSetupStep2.style.display = 'none';
+  pinSetupConfirm.disabled = true;
+  pinSetupConfirm.textContent = 'Continue';
+  pinHint1.textContent = 'Enter 6 digits for your PIN';
+  pinHint1.style.color = '#888';
+  pinHint2.textContent = 'Re-enter your PIN to confirm';
+  pinHint2.style.color = '#888';
+}
+
+function setupPinInputListeners(digits, step) {
+  digits.forEach((digit, index) => {
+    digit.addEventListener('input', (e) => {
+      const value = e.target.value;
+      
+      if (value && /^\d$/.test(value)) {
+        digit.classList.add('filled');
+        
+        // Move to next input
+        if (index < digits.length - 1) {
+          digits[index + 1].focus();
+        }
+      } else {
+        digit.classList.remove('filled');
+      }
+      
+      // Check if all digits are filled
+      checkPinComplete(digits, step);
+    });
+    
+    digit.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && index > 0) {
+        digits[index - 1].focus();
+        digits[index - 1].value = '';
+        digits[index - 1].classList.remove('filled');
+        checkPinComplete(digits, step);
+      }
+    });
+  });
+}
+
+function checkPinComplete(digits, step) {
+  const pin = Array.from(digits).map(d => d.value).join('');
+  const isComplete = pin.length === 6;
+  
+  if (step === 1) {
+    pinSetupConfirm.disabled = !isComplete;
+    pinHint1.textContent = isComplete ? '✓ PIN entered' : 'Enter 6 digits for your PIN';
+    pinHint1.style.color = isComplete ? '#28a745' : '#888';
+  } else {
+    pinSetupConfirm.disabled = !isComplete;
+    pinHint2.textContent = isComplete ? '✓ PIN confirmed' : 'Re-enter your PIN to confirm';
+    pinHint2.style.color = isComplete ? '#28a745' : '#888';
+  }
+  
+  return isComplete;
+}
+
+function getPinFromDigits(digits) {
+  return Array.from(digits).map(d => d.value).join('');
+}
+
+// Initialize PIN setup listeners
+setupPinInputListeners(pinSetupDigits1, 1);
+setupPinInputListeners(pinSetupDigits2, 2);
+
+
+/* PIN Setup Event Handlers - FIXED VERSION */
+pinSetupConfirm.addEventListener('click', () => {
+  console.log("PIN Setup Confirm clicked, step:", pinSetupStep);
+  
+  if (pinSetupStep === 1) {
+    // Step 1: Save first PIN and move to confirmation
+    firstPIN = getPinFromDigits(pinSetupDigits1);
+    console.log("First PIN:", firstPIN);
+    
+    if (firstPIN.length === 6) {
+      // Move to step 2
+      pinSetupStep1.style.display = 'none';
+      pinSetupStep2.style.display = 'block';
+      pinSetupStep = 2;
+      pinSetupConfirm.disabled = true;
+      pinSetupConfirm.textContent = 'Finish Setup';
+      pinSetupDigits2[0].focus();
+    }
+  } else {
+    // Step 2: Confirm PIN and finish setup
+    const secondPIN = getPinFromDigits(pinSetupDigits2);
+    console.log("Second PIN:", secondPIN);
+    
+    if (secondPIN.length === 6) {
+      if (firstPIN === secondPIN) {
+        // PINs match - complete setup
+        const tempPriv = sessionStorage.getItem("temp_private_key");
+        const tempAddr = sessionStorage.getItem("temp_address");
+        
+        console.log("Temp wallet data:", { tempAddr, tempPriv: tempPriv ? 'exists' : 'missing' });
+        
+        if (tempPriv && tempAddr) {
+          saveEncryptedWallet(tempAddr, tempPriv, firstPIN);
+          setCurrentWallet(tempAddr, tempPriv);
+          closePinSetupModal();
+          
+          // ✅ FIX: Show dashboard immediately after PIN setup
+          console.log("✅ PIN setup completed, showing dashboard...");
+          
+          // 🔥 Navigation ON
+          document.getElementById("homeNavigation").style.display = "flex";
+          document.querySelector(".bottom-nav").style.display = "flex";
+          document.querySelector(".trade-sub-nav").style.display = "flex";
+          
+          showScreen('dashboard');
+          
+          // Show fingerprint setup after PIN setup (optional)
+          setTimeout(() => {
+            showFingerprintSetup();
+          }, 1000);
+          
+          // Clear temporary storage
+          sessionStorage.removeItem("temp_private_key");
+          sessionStorage.removeItem("temp_address");
+          
+          console.log("✅ Wallet setup completed successfully");
+        } else {
+          alert('Error: Wallet data not found. Please try again.');
+          closePinSetupModal();
+          showScreen('import');
+        }
+      } else {
+        // PINs don't match
+        pinHint2.textContent = 'PINs do not match. Try again.';
+        pinHint2.style.color = '#dc3545';
+        
+        // Clear second PIN and reset
+        pinSetupDigits2.forEach(digit => {
+          digit.value = '';
+          digit.classList.remove('filled');
+        });
+        pinSetupConfirm.disabled = true;
+        pinSetupDigits2[0].focus();
+      }
+    }
+  }
+});
+
+pinSetupCancel.addEventListener('click', () => {
+  console.log("PIN Setup cancelled");
+  closePinSetupModal();
+});
+
+/* ========== Encryption Functions ========== */
+function encryptData(data, pin) {
+  const key = CryptoJS.PBKDF2(pin, ENCRYPTION_KEY, { keySize: 256/32, iterations: 1000 });
+  const encrypted = CryptoJS.AES.encrypt(data, key.toString(), { mode: CryptoJS.mode.CBC });
+  return encrypted.toString();
+}
+
+function decryptData(encryptedData, pin) {
+  try {
+    const key = CryptoJS.PBKDF2(pin, ENCRYPTION_KEY, { keySize: 256/32, iterations: 1000 });
+    const decrypted = CryptoJS.AES.decrypt(encryptedData, key.toString(), { mode: CryptoJS.mode.CBC });
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  } catch(e) {
+    return null;
+  }
+}
+
+function saveEncryptedWallet(address, privateKey, pin) {
+  const encryptedKey = encryptData(privateKey, pin);
+  localStorage.setItem("laam_encrypted_priv", encryptedKey);
+  localStorage.setItem("laam_wallet_address", address);
+  localStorage.setItem("laam_pin_set", "true");
+}
+
+function loadEncryptedWallet(pin) {
+  const encryptedKey = localStorage.getItem("laam_encrypted_priv");
+  const address = localStorage.getItem("laam_wallet_address");
+  
+  if (!encryptedKey || !address) return null;
+  
+  const decryptedKey = decryptData(encryptedKey, pin);
+  if (!decryptedKey) return null;
+  
+  return { address, privateKey: decryptedKey };
+}
+
+/* ========== PIN Input Management ========== */
+pinDigits.forEach((digit, index) => {
+  digit.addEventListener('input', (e) => {
+    // Move to next input automatically
+    if (e.target.value && index < pinDigits.length - 1) {
+      pinDigits[index + 1].focus();
+    }
+  });
+  
+  digit.addEventListener('keydown', (e) => {
+    // Handle backspace
+    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+      pinDigits[index - 1].focus();
+    }
+  });
+});
+
+function getPin() {
+  return Array.from(pinDigits).map(d => d.value).join('');
+}
+
+function clearPin() {
+  pinDigits.forEach(d => d.value = '');
+  pinDigits[0].focus();
+}
+
+
+/* ========== Screen Management ========== */
+function showScreen(screenName) {
+  importWalletScreen.classList.remove('active');
+  accountGeneratedScreen.classList.remove('active');
+  mainDashboard.classList.remove('active');
+  lockScreen.classList.remove('active');
+  
+  switch(screenName) {
+    case 'import':
+      importWalletScreen.classList.add('active');
+      break;
+    case 'account':
+      accountGeneratedScreen.classList.add('active');
+      break;
+    case 'dashboard':
+  mainDashboard.classList.add('active');
+  break;  // ← KA SAAR updateWalletUI
+    case 'lock':
+      lockScreen.classList.add('active');
+      clearPin();
+      break;
+  }
+}
+
+/* ========== Lock/Unlock Functions ========== */
+function lockWallet() {
+  stopAutoRefresh();
+  currentPrivateKey = null;
+  currentAddress = null;
+  sessionStorage.removeItem("laam_unlocked_priv");
+  sessionStorage.removeItem("laam_unlocked_addr");
+
+  // 🔥 Navigation OFF
+  homeNavigation.style.display = "none";
+  bottomNav.style.display = "none";
+  tradeSubNav.style.display = "none";
+
+  showScreen('lock');
+}
+
+function unlockWallet(pin) {
+  const wallet = loadEncryptedWallet(pin);
+  if (wallet) {
+
+    setCurrentWallet(wallet.address, wallet.privateKey);
+
+    // 🔥 Navigation ON
+    document.getElementById("homeNavigation").style.display = "flex";
+    document.querySelector(".bottom-nav").style.display = "flex";
+    document.querySelector(".trade-sub-nav").style.display = "flex";
+
+    // Marka screen la badalayo HAL update keliya
+    showScreen('dashboard');
+
+    // 🔥 KU DAR: Update UI hal mar (prevent duplicate rows)
+    updateWalletUI();
+
+    return true;
+  }
+
+  return false;
+}
+
+/* ========== Auto Refresh Functions ========== */
+async function autoRefreshLoop() {
+    while (autoRefreshEnabled && currentAddress) {
+        console.log("⟳ Auto refreshing wallet...");
+        await updateWalletUI();
+        await new Promise(r => setTimeout(r, 30000)); // 30 seconds
+    }
+}
+
+function startAutoRefresh() {
+    autoRefreshEnabled = true;
+    autoRefreshLoop();
+}
+
+function stopAutoRefresh() {
+    autoRefreshEnabled = false;
+}
+
+
+
+
+/* ========== Wallet State Management ========== */
+function setCurrentWallet(addr, priv) {
+  currentAddress = addr;
+  currentPrivateKey = priv;
+  if (addr) sessionStorage.setItem("laam_unlocked_addr", addr);
+  if (priv) sessionStorage.setItem("laam_unlocked_priv", priv);
+  
+  // Start auto refresh when wallet is set
+  if (addr && priv) {
+    startAutoRefresh();
+  }
+}
+/* ========== Event Listeners ========== */
+// Lock/Unlock events
+/* ========== Event Listeners ========== */
+// Lock/Unlock events
+unlockWalletBtn.addEventListener('click', () => {
+  const pin = getPin();
+  if (pin.length !== 6) {
+    alert('Fadlan geli PIN-ka oo dhan 6 xaraf');
+    return;
+  }
+  
+  if (unlockWallet(pin)) {
+    clearPin();
+  } else {
+    alert('PIN-ka waa khalad. Isku day mar kale.');
+    clearPin();
+  }
+});
+
+// Import/Create wallet events - FIXED VERSION
+createNewWalletBtn.addEventListener('click', async () => {
+  try {
+    console.log("🔄 Creating new wallet with currentWeb3...");
+    
+    // Use currentWeb3 instead of web3
+    const acct = currentWeb3.eth.accounts.create();
+    
+    // Display the generated account
+    secretKeyDisplay.textContent = acct.privateKey;
+    publicKeyDisplay.textContent = acct.address;
+    
+    // Store temporarily for use when they click "USE THIS WALLET"
+    sessionStorage.setItem("temp_private_key", acct.privateKey);
+    sessionStorage.setItem("temp_address", acct.address);
+    
+    showScreen('account');
+    console.log("✅ Wallet created successfully!");
+  } catch(e) {
+    console.error("Create wallet error", e);
+    alert('Error creating wallet: ' + e.message);
+  }
+});
+
+importWalletBtn.addEventListener('click', async () => {
+  let priv = privateKeyInput.value.trim();
+  if (!priv) { alert('Fadlan geli private key'); return; }
+  if (!priv.startsWith('0x')) priv = '0x'+priv;
+  
+  try {
+    // Use currentWeb3 instead of web3
+    const acct = currentWeb3.eth.accounts.privateKeyToAccount(priv);
+    
+    // Display the imported account
+    secretKeyDisplay.textContent = acct.privateKey;
+    publicKeyDisplay.textContent = acct.address;
+    
+    // Store temporarily for use when they click "USE THIS WALLET"
+    sessionStorage.setItem("temp_private_key", acct.privateKey);
+    sessionStorage.setItem("temp_address", acct.address);
+    
+    showScreen('account');
+    privateKeyInput.value = '';
+  } catch(e) {
+    console.error("Import error", e);
+    alert('Private key-ga waa saxna waa khalad. Fadlan hubi: ' + e.message);
+  }
+});
+
+// Account generated screen events - MODIFIED to use PIN setup modal
+useAccountBtn.addEventListener('click', () => {
+  const tempPriv = sessionStorage.getItem("temp_private_key");
+  const tempAddr = sessionStorage.getItem("temp_address");
+  
+  if (tempPriv && tempAddr) {
+    // Open PIN setup modal instead of using prompt
+    openPinSetupModal();
+  }
+});
+
+backToImportBtn.addEventListener('click', () => {
+  showScreen('import');
+});
+
+
+/* Copy button functionality - SIMPLIFIED WORKING VERSION */
+copySecretKeyBtn.addEventListener('click', function() {
+  const textToCopy = secretKeyDisplay.textContent;
+  
+  // Method 1: Modern clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      showCopyFeedback(this);
+    }).catch(() => {
+      useFallbackCopy(textToCopy, this);
+    });
+  } else {
+    // Method 2: Fallback for older browsers
+    useFallbackCopy(textToCopy, this);
+  }
+});
+
+copyPublicKeyBtn.addEventListener('click', function() {
+  const textToCopy = publicKeyDisplay.textContent;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      showCopyFeedback(this);
+    }).catch(() => {
+      useFallbackCopy(textToCopy, this);
+    });
+  } else {
+    useFallbackCopy(textToCopy, this);
+  }
+});
+
+// Helper functions
+function showCopyFeedback(button) {
+  const originalHTML = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-check"></i> COPIED';
+  button.style.background = '#28a745';
+  
+  setTimeout(() => {
+    button.innerHTML = originalHTML;
+    button.style.background = '';
+  }, 2000);
+}
+
+function useFallbackCopy(text, button) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  textArea.style.top = '-999999px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showCopyFeedback(button);
+  } catch (err) {
+    alert('❌ Copy failed: ' + err);
+  } finally {
+    document.body.removeChild(textArea);
+  }
+}
+
+
+copyAddressBtn.addEventListener('click', async () => {
+  if (!currentAddress) return alert('Wallet ma furmin');
+  try { 
+    await navigator.clipboard.writeText(currentAddress); 
+    alert('Address copied'); 
+  } catch(e){ 
+    alert('Copy failed'); 
+  }
+});
+
+// Update the updateWalletUI function to handle both networks properly
+async function updateWalletUI() {
+    if (!currentAddress) {
+        walletAddressEl.innerText = '—';
+        totalBalanceEl.innerText = '0.0000';
+        balanceUSDEl.innerText = '$0';
+        
+        if (assetsListEl) {
+            assetsListEl.innerHTML = '<div class="muted">Wallet ma furmin</div>';
+        }
+        return;
+    }
+
+    // Clear previous assets
+    assetsListEl.innerHTML = '';
+
+    walletAddressEl.innerText = currentAddress;
+    receiveAddressEl.textContent = currentAddress;
+
+    // ===== Fetch Native Balance (BNB or ETH) =====
+    let nativeBalance = 0, nativePrice = 0;
+    let nativeSymbol = currentNetwork === "BSC" ? "BNB" : "ETH";
+    let nativeName = currentNetwork === "BSC" ? "Binance Coin" : "Ethereum";
+    
+    try {
+        const balanceWei = await currentWeb3.eth.getBalance(currentAddress);
+        nativeBalance = parseFloat(currentWeb3.utils.fromWei(balanceWei, 'ether'));
+
+        try {
+            const res = await fetch(
+                `https://api.coingecko.com/api/v3/simple/price?ids=${
+                    currentNetwork === "BSC" ? "binancecoin" : "ethereum"
+                }&vs_currencies=usd`
+            );
+
+            const data = await res.json();
+            nativePrice = data[currentNetwork === "BSC" ? "binancecoin" : "ethereum"].usd || 1;
+
+        } catch (e) { 
+            console.log("CoinGecko price fetch failed, using default price");
+            nativePrice = currentNetwork === "BSC" ? 600 : 3000; // Default prices
+        }
+
+        totalBalanceEl.textContent = `${nativeBalance.toFixed(4)} ${nativeSymbol}`;
+        balanceUSDEl.textContent = `$${(nativeBalance * nativePrice).toFixed(2)}`;
+
+    } catch (e) {
+        console.error("Native balance error", e);
+        totalBalanceEl.textContent = `0.0000 ${nativeSymbol}`;
+        balanceUSDEl.textContent = '$0';
+    }
+
+    // ====== Show native coin row ======
+    const nativeLogo = currentNetwork === "BSC" 
+        ? "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/info/logo.png"
+        : "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png";
+
+    const nativeRow = document.createElement('div');
+    nativeRow.className = 'asset-item';
+    nativeRow.innerHTML = `
+        <div class="asset-icon-wrapper">
+            <img src="${nativeLogo}" class="asset-logo" onerror="this.style.display='none'">
+            <span style="color: white; font-size: 16px;">${nativeSymbol.charAt(0)}</span>
+        </div>
+        <div class="asset-details">
+            <div class="asset-name">${nativeName}</div>
+            <div class="asset-symbol">${nativeSymbol}</div>
+        </div>
+        <div class="asset-balance">
+            <div class="asset-amount">${nativeBalance.toFixed(4)}</div>
+            <div class="asset-value">$${(nativeBalance * nativePrice).toFixed(2)}</div>
+        </div>
+    `;
+    assetsListEl.appendChild(nativeRow);
+
+    // ====== Load Custom Tokens (current network only) ======
+    const tokens = JSON.parse(localStorage.getItem("laam_tokens_v2") || "[]");
+    
+    // FIX: Filter tokens by current network and remove duplicates
+    const seenTokens = new Set();
+    const networkTokens = tokens.filter(t => {
+        const key = t.address.toLowerCase() + '-' + t.network;
+        if (seenTokens.has(key)) {
+            return false; // Remove duplicate
+        }
+        seenTokens.add(key);
+        return t.network === currentNetwork; // Only current network tokens
+    });
+
+    if (networkTokens.length === 0) {
+        const div = document.createElement('div');
+        div.className = 'muted';
+        div.style.textAlign = 'center';
+        div.style.padding = '20px';
+        div.innerText = 'No tokens added yet.';
+        assetsListEl.appendChild(div);
+        return;
+    }
+
+    // ====== Display each token ======
+    for (let t of networkTokens) {
+        const row = document.createElement('div');
+        row.className = 'asset-item';
+        
+        row.innerHTML = `
+            <div class="asset-icon-wrapper">
+                <img src="${t.logo}" class="asset-logo" onerror="this.src='https://via.placeholder.com/40?text=?'">
+            </div>
+            <div class="asset-details">
+                <div class="asset-name">${t.name}</div>
+                <div class="asset-symbol">${t.symbol}</div>
+            </div>
+            <div class="asset-balance">
+                <div class="asset-amount">loading...</div>
+                <div class="asset-value">$-</div>
+            </div>
+        `;
+
+        assetsListEl.appendChild(row);
+
+        // Fetch token balance - FIXED with better error handling
+        (async () => {
+            try {
+                const contract = new currentWeb3.eth.Contract(tokenABI, t.address);
+                const balRaw = await contract.methods.balanceOf(currentAddress).call();
+                const dec = Number(t.decimals);
+                const bal = Number(balRaw) / (10 ** dec);
+
+                const balanceElement = row.querySelector('.asset-amount');
+                const valueElement = row.querySelector('.asset-value');
+                
+                if (balanceElement) {
+                    balanceElement.textContent = bal.toFixed(4);
+                }
+                if (valueElement) {
+                    valueElement.textContent = '$-';
+                }
+            } catch (e) {
+                console.error('Token balance error:', e);
+                const balanceElement = row.querySelector('.asset-amount');
+                if (balanceElement) {
+                    balanceElement.textContent = 'error';
+                }
+            }
+        })();
+    }
+}
+
+/* ========== Add Token (network-aware) - FIXED ========== */
+addTokenBtn.addEventListener('click', async () => {
+  const addr = (newTokenAddress.value || '').trim();
+  let sym = (newTokenSymbol.value || '').trim();
+  let dec = (newTokenDecimals.value || '').trim();
+  
+  if(!currentWeb3.utils.isAddress(addr)){ 
+      alert('Addresska token-ka ma saxna'); 
+      return; 
+  }
+
+  if(!sym || !dec){
+    try{
+      const contract = new currentWeb3.eth.Contract(tokenABI, addr);
+      sym = sym || await contract.methods.symbol().call();
+      dec = dec || await contract.methods.decimals().call();
+    }catch(e){ 
+        alert('Failed to fetch token info'); 
+        return; 
+    }
+  }
+  
+  dec = Number(dec);
+  tokens = JSON.parse(localStorage.getItem("laam_tokens_v2")||"[]");
+  
+  // FIX: Check for duplicates by address AND network
+  if(tokens.some(t => t.address.toLowerCase() === addr.toLowerCase() && t.network === currentNetwork)){
+    alert('Token-kan hore ayaa lagu daray network-kan.');
+    return;
+  }
+
+  let logo = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${currentNetwork==="BSC"?"smartchain":"base"}/assets/${addr}/logo.png`;
+  try{
+    const cgRes = await fetch(`https://api.coingecko.com/api/v3/coins/${currentNetwork==="BSC"?"binance-smart-chain":"base-network"}/contract/${addr.toLowerCase()}`);
+    if(cgRes.ok){
+      const cgData = await cgRes.json();
+      if(cgData.image?.small) logo = cgData.image.small;
+    }
+  }catch(e){ console.warn("CoinGecko fetch failed", e); }
+
+  // FIX: Add network information when saving token
+  tokens.push({ 
+      address: addr, 
+      symbol: sym, 
+      decimals: dec, 
+      name: sym, 
+      logo, 
+      network: currentNetwork 
+  });
+  
+  localStorage.setItem("laam_tokens_v2", JSON.stringify(tokens));
+  newTokenAddress.value = newTokenSymbol.value = newTokenDecimals.value = '';
+  updateWalletUI();
+});
+
+/* ========== On Load Logic ========== */
+window.addEventListener('load', async () => {
+  tokens = JSON.parse(localStorage.getItem("laam_tokens_v2") || "[]");
+  
+  // Check if wallet exists in localStorage
+  const hasEncryptedWallet = localStorage.getItem("laam_encrypted_priv") && 
+                            localStorage.getItem("laam_wallet_address");
+  
+  if (hasEncryptedWallet) {
+    showScreen('lock');
+  } else {
+    showScreen('import');
+  }
+  
+  refreshTxHistoryUI();
+});
+
+/* ========== Transaction History Functions ========== */
+function pushTxHistory(item) {
+  const arr = JSON.parse(localStorage.getItem('laam_tx_history') || '[]');
+  arr.unshift(item);
+  localStorage.setItem('laam_tx_history', JSON.stringify(arr.slice(0,200)));
+  refreshTxHistoryUI();
+}
+
+function refreshTxHistoryUI() {
+  const arr = JSON.parse(localStorage.getItem('laam_tx_history') || '[]');
+  if (arr.length === 0) {
+    transactionsListEl.innerHTML = '<div class="muted small">No transactions yet</div>';
+    return;
+  }
+  transactionsListEl.innerHTML = '';
+  for (let it of arr) {
+    const d = new Date(it.ts);
+    const el = document.createElement('div');
+    el.className = 'asset-item';
+    el.innerHTML = `<div><strong>${it.type}</strong><div class="muted small">to ${it.to}</div></div><div style="text-align:right"><div class="small">${d.toLocaleString()}</div><div><a target="_blank" href="https://bscscan.com/tx/${it.txHash}">${shortHash(it.txHash)}</a></div></div>`;
+    transactionsListEl.appendChild(el);
+  }
+}
+
+function shortHash(h) { return h ? h.substring(0,10)+'...' : '-'; }
+
+// Event listeners for transaction history
+clearHistoryBtn.addEventListener('click', ()=> { 
+  if (confirm('Clear history?')) { 
+    localStorage.removeItem('laam_tx_history'); 
+    refreshTxHistoryUI(); 
+  }
+});
+
+refreshBalancesBtn.addEventListener('click', updateWalletUI);
+
+/* ========== Send/Receive Modal Functions ========== */
+sendBtnWallet.addEventListener('click', () => {
+  if (!currentAddress) { alert('Fadlan marka hore fur wallet (create/import)'); return; }
+  openSendModal();
+});
+
+function openSendModal() {
+  updateSendModalCurrency();
+  document.querySelectorAll('.step').forEach((el,i)=>el.classList.toggle('active', i===0));
+  Object.values(stepPanels).forEach(p => p.style.display='none');
+  stepPanels[1].style.display='block';
+  sendModal.classList.add('active');
+  sendProgressEl.innerHTML = '';
+  txNoticeEl.innerText = '';
+}
+
+closeSendModal.addEventListener('click', ()=> sendModal.classList.remove('active'));
+cancelSendBtn.addEventListener('click', ()=> sendModal.classList.remove('active'));
+
+// Receive modal - FIXED VERSION
+receiveBtnWallet.addEventListener('click', () => {
+  if (!currentAddress) { 
+    alert('Fadlan fur wallet marka hore (create/import)'); 
+    return; 
+  }
+  openReceiveModal();
+});
+
+function openReceiveModal() {
+  // Clear previous QR code
+  qrcodeDiv.innerHTML = '';
+  
+  // Generate new QR code
+  try {
+    new QRCode(qrcodeDiv, {
+      text: currentAddress,
+      width: 160,
+      height: 160,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  } catch (error) {
+    console.error("QR Code generation error:", error);
+    qrcodeDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#666">QR Code Error</div>';
+  }
+  
+  receiveAddressEl.innerText = currentAddress;
+  receiveModal.classList.add('active');
+}
+
+// Copy receive address - FIXED
+copyReceiveAddr.addEventListener('click', async () => {
+  try { 
+    await navigator.clipboard.writeText(currentAddress); 
+    alert('✅ Address copied!'); 
+  } catch(e){ 
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = currentAddress;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('✅ Address copied!');
+  }
+});
+
+// Download QR - FIXED
+downloadQR.addEventListener('click', () => {
+  if (!currentAddress) return;
+  
+  try {
+    const canvas = qrcodeDiv.querySelector('canvas');
+    if (canvas) {
+      const link = document.createElement('a');
+      link.download = `laam-wallet-${currentAddress.substring(0, 8)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } else {
+      alert('QR Code not ready yet');
+    }
+  } catch (error) {
+    console.error("Download QR error:", error);
+    alert('Error downloading QR code');
+  }
+});
+closeReceiveModal.addEventListener('click', ()=> receiveModal.classList.remove('active'));
+
+// Send modal wizard navigation
+// Send modal wizard navigation - UPDATED FOR NETWORK SWITCHING
+stepButtons.next1.addEventListener('click', () => {
+  const amt = sendAmountInput.value.trim();
+  if (!amt || isNaN(amt) || Number(amt) <= 0) { alert('Geli qadarka saxda ah'); return; }
+  stepPanels[1].style.display='none'; stepPanels[2].style.display='block';
+  setWizardStepActive(2);
+});
+
+stepButtons.back2.addEventListener('click', () => {
+  stepPanels[2].style.display='none'; stepPanels[1].style.display='block';
+  setWizardStepActive(1);
+});
+
+stepButtons.next2.addEventListener('click', () => {
+  const addr = recipientAddressInput.value.trim();
+  if (!currentWeb3.utils.isAddress(addr)) { alert('Recipient address ma saxna'); return; }
+  const cur = sendCurrencySelect.value;
+  const amt = Number(sendAmountInput.value);
+  
+  // FIXED: Use getNativeSymbol() instead of hardcoded 'BNB'
+  if (cur === getNativeSymbol()) {
+    confirmAmountEl.innerText = `${amt} ${getNativeSymbol()}`;
+  } else {
+    const token = tokens.find(t => t.address === cur && t.network === currentNetwork);
+    confirmAmountEl.innerText = `${amt} ${token?.symbol || 'TOKEN'}`;
+  }
+  
+  confirmAddressEl.innerText = addr;
+  estimateFeePreview(cur, amt, addr);
+  stepPanels[2].style.display='none'; stepPanels[3].style.display='block';
+  setWizardStepActive(3);
+});
+
+stepButtons.back3.addEventListener('click', () => {
+  stepPanels[3].style.display='none'; stepPanels[2].style.display='block';
+  setWizardStepActive(2);
+});
+
+/* helper: set wizard step active style */
+function setWizardStepActive(step) {
+  document.querySelectorAll('.step').forEach((el)=> el.classList.toggle('active', Number(el.dataset.step) === step));
+}
+
+/* estimate fee preview - UPDATED FOR NETWORK SWITCHING */
+async function estimateFeePreview(currency, amount, to) {
+  try {
+    const nativeSymbol = getNativeSymbol();
+    
+    if (currency === getNativeSymbol()) {
+      const gasPrice = await currentWeb3.eth.getGasPrice();
+      const gasLimit = 21000;
+      const feeNative = currentWeb3.utils.fromWei((BigInt(gasPrice) * BigInt(gasLimit)).toString(), 'ether');
+      confirmFeeEl.innerText = `${Number(feeNative).toFixed(6)} ${nativeSymbol} (est)`;
+      
+    } else {
+      const gasPrice = await currentWeb3.eth.getGasPrice();
+      const est = 120000;
+      const feeNative = currentWeb3.utils.fromWei((BigInt(gasPrice) * BigInt(est)).toString(), 'ether');
+      confirmFeeEl.innerText = `${Number(feeNative).toFixed(6)} ${nativeSymbol} (est)`;
+    }
+  } catch(e){
+    console.error("Estimate err", e);
+    confirmFeeEl.innerText = 'error';
+  }
+}
+
+/* Quick amounts */
+document.querySelectorAll('.quick-amount').forEach(b => {
+  b.addEventListener('click', () => sendAmountInput.value = b.dataset.amount);
+});
+
+// Update the send modal currency options - UPDATED FOR NETWORK SWITCHING
+function updateSendModalCurrency() {
+    const sendCurrencySelect = document.getElementById('sendCurrency');
+    sendCurrencySelect.innerHTML = `<option value="${getNativeSymbol()}">${getNativeSymbol()}</option>`;
+    
+    // Add tokens for current network
+    const tokens = JSON.parse(localStorage.getItem("laam_tokens_v2") || "[]");
+    const networkTokens = tokens.filter(t => t.network === currentNetwork);
+    
+    networkTokens.forEach(token => {
+        const option = document.createElement('option');
+        option.value = token.address;
+        option.textContent = token.symbol;
+        sendCurrencySelect.appendChild(option);
+    });
+}
+
+// Function to update available balance in send modal
+async function updateSendModalBalance() {
+    const availableBalanceEl = document.getElementById('availableBalance');
+    const sendCurrencySelect = document.getElementById('sendCurrency');
+    
+    if (!availableBalanceEl || !sendCurrencySelect || !currentAddress) return;
+
+    const selectedCurrency = sendCurrencySelect.value;
+    
+    try {
+        let balance;
+        let symbol;
+
+        if (selectedCurrency === getNativeSymbol()) {
+            // Native token balance (BNB/ETH)
+            const balanceWei = await currentWeb3.eth.getBalance(currentAddress);
+            balance = parseFloat(currentWeb3.utils.fromWei(balanceWei, 'ether'));
+            symbol = getNativeSymbol();
+        } else {
+            // ERC20 token balance
+            const token = tokens.find(t => t.address === selectedCurrency && t.network === currentNetwork);
+            if (token) {
+                const contract = new currentWeb3.eth.Contract(tokenABI, token.address);
+                const balanceWei = await contract.methods.balanceOf(currentAddress).call();
+                balance = balanceWei / (10 ** token.decimals);
+                symbol = token.symbol;
+            } else {
+                balance = 0;
+                symbol = 'TOKEN';
+            }
+        }
+
+        availableBalanceEl.textContent = `${balance.toFixed(6)} ${symbol}`;
+    } catch (error) {
+        console.error("Error updating send modal balance:", error);
+        availableBalanceEl.textContent = `0.0000 ${getNativeSymbol()}`;
+    }
+}
+
+// Update send modal when opening - UPDATED FOR NETWORK SWITCHING
+function openSendModal() {
+    // Update currency options first
+    updateSendModalCurrency();
+    
+    document.querySelectorAll('.step').forEach((el,i) => el.classList.toggle('active', i===0));
+    Object.values(stepPanels).forEach(p => p.style.display='none');
+    stepPanels[1].style.display='block';
+    sendModal.classList.add('active');
+    sendProgressEl.innerHTML = '';
+    txNoticeEl.innerText = '';
+    
+    // Update available balance
+    updateSendModalBalance();
+}
+
+// Add event listener for currency change in send modal
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'sendCurrency') {
+        updateSendModalBalance();
+    }
+});
+
+// Confirm send button - UPDATED FOR NETWORK SWITCHING
+stepButtons.confirmSendBtn.addEventListener('click', async () => {
+  const currency = sendCurrencySelect.value;
+  const amount = Number(sendAmountInput.value);
+  const to = recipientAddressInput.value.trim();
+  if (!currentPrivateKey) { alert('Private key no found. Import/create before.'); return; }
+  sendProgressEl.innerHTML = '<div class="tx-loading">Sending... please wait</div>';
+  try {
+    let txHash;
+    // FIXED: Use getNativeSymbol() instead of hardcoded 'BNB'
+    if (currency === getNativeSymbol()) {
+      txHash = await sendBNB(currentPrivateKey, to, amount);
+      pushTxHistory({ 
+        type: `Send ${getNativeSymbol()}`, 
+        to, 
+        amount, 
+        txHash, 
+        ts: Date.now(),
+        network: currentNetwork 
+      });
+    } else {
+      const t = tokens.find(tt => tt.address === currency && tt.network === currentNetwork);
+      if (!t) throw new Error('Token ma jira');
+      txHash = await sendToken(currentPrivateKey, t.address, to, amount, t.decimals);
+      pushTxHistory({ 
+        type: `Send ${t.symbol}`, 
+        to, 
+        amount, 
+        txHash, 
+        ts: Date.now(),
+        network: currentNetwork 
+      });
+    }
+    // FIXED: Use getExplorerUrl() for correct explorer
+    sendProgressEl.innerHTML = `<div class="muted small">Success! TxHash: <a target="_blank" href="${getExplorerUrl()}/tx/${txHash}">${txHash.substring(0,10)}...</a></div>`;
+    await updateWalletUI();
+    refreshTxHistoryUI();
+  } catch(e) {
+    console.error("Send error", e);
+    sendProgressEl.innerHTML = `<div class="muted small" style="color:#a00">Error: ${e.message || e}</div>`;
+  }
+});
+
+// Send functions - UPDATED FOR NETWORK SWITCHING
+async function sendBNB(privKey, to, amountBNB) {
+    const account = currentWeb3.eth.accounts.privateKeyToAccount(privKey);
+    const from = account.address;
+    const nonce = await currentWeb3.eth.getTransactionCount(from, 'pending');
+    const value = currentWeb3.utils.toWei(amountBNB.toString(), 'ether');
+    const gasPrice = await currentWeb3.eth.getGasPrice();
+    
+    // Set correct chainId for each network
+    const chainId = getChainId();
+    
+    const tx = {
+        to,
+        value,
+        gas: 21000,
+        gasPrice,
+        nonce,
+        chainId: chainId
+    };
+    
+    const signed = await account.signTransaction(tx);
+    const receipt = await currentWeb3.eth.sendSignedTransaction(signed.rawTransaction);
+    return receipt.transactionHash;
+}
+
+async function sendToken(privKey, tokenAddress, to, amount, decimals) {
+    const account = currentWeb3.eth.accounts.privateKeyToAccount(privKey);
+    const from = account.address;
+    const contract = new currentWeb3.eth.Contract(tokenABI, tokenAddress);
+    const value = BigInt(Math.floor(amount * (10 ** decimals))).toString();
+    const data = contract.methods.transfer(to, value).encodeABI();
+    const nonce = await currentWeb3.eth.getTransactionCount(from, 'pending');
+    const gasPrice = await currentWeb3.eth.getGasPrice();
+    
+    // Set correct chainId for each network
+    const chainId = getChainId();
+    
+    let gasLimit;
+    try {
+        gasLimit = await contract.methods.transfer(to, value).estimateGas({from});
+        gasLimit = Math.floor(gasLimit * 1.2);
+    } catch(e) { gasLimit = 150000; }
+    
+    const tx = {
+        to: tokenAddress,
+        data,
+        gas: gasLimit,
+        gasPrice,
+        nonce,
+        value: '0x0',
+        chainId: chainId
+    };
+    
+    const signed = await account.signTransaction(tx);
+    const receipt = await currentWeb3.eth.sendSignedTransaction(signed.rawTransaction);
+    return receipt.transactionHash;
+}
+
+// Add these helper functions if not already defined
+function getChainId() {
+  return currentNetwork === "BSC" ? 56 : 8453;
+}
+
+function getExplorerUrl() {
+  return currentNetwork === "BSC" ? "https://bscscan.com" : "https://basescan.org";
+}
+
+// Auto-fill symbol & decimals when address is entered
+newTokenAddress.addEventListener('blur', async () => {
+    const address = newTokenAddress.value.trim();
+
+    if (!currentWeb3.utils.isAddress(address)) {
+        newTokenSymbol.value = '';
+        newTokenDecimals.value = '';
+        return;
+    }
+
+    try {
+        const contract = new currentWeb3.eth.Contract(tokenABI, address);
+        const [symbol, decimals] = await Promise.all([
+            contract.methods.symbol().call(),
+            contract.methods.decimals().call()
+        ]);
+
+        newTokenSymbol.value = symbol;
+        newTokenDecimals.value = decimals;
+
+    } catch (err) {
+        console.error("Error fetching token info:", err);
+        newTokenSymbol.value = '';
+        newTokenDecimals.value = '';
+    }
+});
+// --- Spinner helper ---
+function setTokenStatusIcon(state){
+  let icon = document.getElementById("tokenStatusIcon");
+  if(!icon){
+    icon = document.createElement("span");
+    icon.id = "tokenStatusIcon";
+    icon.style.marginLeft = "8px";
+    icon.style.fontSize = "1.1rem";
+    newTokenAddress.parentNode.insertBefore(icon, newTokenAddress.nextSibling);
+  }
+  if(state === "loading"){
+    icon.textContent = "⏳";
+    icon.style.color = "goldenrod";
+  } else if(state === "success"){
+    icon.textContent = "✅";
+    icon.style.color = "limegreen";
+  } else if(state === "failed"){
+    icon.textContent = "❌";
+    icon.style.color = "crimson";
+  } else {
+    icon.textContent = "";
+  }
+}
+
+
+/* ========== Bottom Navigation Functions ========== */
+function initBottomNavigation() {
+  const navItems = document.querySelectorAll('.nav-item');
+  const tradeSubNav = document.getElementById('tradeSubNav');
+  const tradeBtns = document.querySelectorAll('.trade-btn');
+  
+  // Main navigation click handlers
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const tab = item.dataset.tab;
+      
+      // Remove active class from all items
+      navItems.forEach(nav => nav.classList.remove('active'));
+      
+      // Add active class to clicked item
+      item.classList.add('active');
+      
+      // Handle tab switching
+      switch(tab) {
+        case 'home':
+          document.getElementById('mainDashboard').style.display = 'none';
+          tradeSubNav.style.display = 'none';
+          document.querySelectorAll('.trade-screen').forEach(screen => {
+            screen.style.display = 'none';
+          });
+          document.getElementById('homeNavigation').style.display = 'grid';
+          break;
+        case 'trade':
+          tradeSubNav.style.display = 'flex';
+          document.getElementById('homeNavigation').style.display = 'none';
+          document.getElementById('mainDashboard').style.display = 'none';
+          showTradeScreen();
+          break;
+        case 'wallet':
+          document.getElementById('homeNavigation').style.display = 'none';
+          document.getElementById('mainDashboard').style.display = 'flex';
+          tradeSubNav.style.display = 'none';
+          break;
+      }
+    });
+  });
+  
+  // Trade sub-navigation click handlers
+  tradeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active class from all trade buttons
+      tradeBtns.forEach(b => b.classList.remove('active'));
+      
+      // Add active class to clicked button
+      btn.classList.add('active');
+      
+      const tradeType = btn.dataset.type;
+      switchTradeType(tradeType);
+    });
+  });
+}
+
+function showTradeScreen() {
+  // Hide main dashboard
+  document.getElementById('mainDashboard').style.display = 'none';
+  
+  // Show trade screen
+  let tradeScreen = document.getElementById('tradeScreen');
+  if (!tradeScreen) {
+    createTradeScreen();
+  } else {
+    tradeScreen.style.display = 'block';
+  }
+}
+
+function switchTradeType(type) {
+  console.log(`Switching to trade type: ${type}`);
+  
+  // Update the trade screen based on type
+  const tradeScreen = document.getElementById('tradeScreen');
+  if (tradeScreen) {
+    const title = tradeScreen.querySelector('h3');
+    if (title) {
+      switch(type) {
+        case 'swap':
+          title.innerHTML = '<i class="fas fa-sync-alt"></i> Swap Tokens';
+          break;
+        case 'limit':
+          title.innerHTML = '<i class="fas fa-chart-line"></i> Limit Order';
+          break;
+        case 'perps':
+          title.innerHTML = '<i class="fas fa-rocket"></i> Perpetuals';
+          break;
+      }
+    }
+  }
+}
+
+// ========== REAL SWAP CONFIGURATION ==========
+const REAL_SWAP_CONFIG = {
+  BSC: {
+    router: "0x10ED43C718714eb63d5aA57B78B54704E256024E", // PancakeSwap Router v2
+    factory: "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73",
+    wrappedNative: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // WBNB
+    explorer: "https://bscscan.com",
+    chainId: 56
+  },
+  Base: {
+    router: "0x327Df1E6de05895d2ab08513aaDD9313Fe505d86", // BaseSwap Router
+    factory: "0xFDa619b6d20975be80A10332cD39b9a4b0FAA8BB",
+    wrappedNative: "0x4200000000000000000000000000000000000006", // WETH
+    explorer: "https://basescan.org", 
+    chainId: 8453
+  }
+};
+
+const REAL_DEFAULT_TOKENS = {
+  BSC: [
+    { symbol: 'BNB', address: 'BNB', decimals: 18, name: 'Binance Coin' },
+    { symbol: 'USDT', address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18, name: 'Tether USD' },
+    { symbol: 'BUSD', address: '0xe9e7CEA3Dedca5984780Bafc599bD69adD087D56', decimals: 18, name: 'Binance USD' },
+    { symbol: 'USDC', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', decimals: 18, name: 'USD Coin' },
+    { symbol: 'CAKE', address: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82', decimals: 18, name: 'PancakeSwap' }
+  ],
+  Base: [
+    { symbol: 'ETH', address: 'ETH', decimals: 18, name: 'Ethereum' },
+    { symbol: 'USDC', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', decimals: 6, name: 'USD Coin' },
+    { symbol: 'DAI', address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', decimals: 18, name: 'Dai Stablecoin' },
+    { symbol: 'CBETH', address: '0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22', decimals: 18, name: 'Coinbase Wrapped Staked ETH' }
+  ]
+};
+
+// Uniswap V2 Router ABI (works for both PancakeSwap and BaseSwap)
+const UNISWAP_V2_ROUTER_ABI = [
+  {
+    "inputs": [
+      {"internalType": "uint256","name": "amountIn","type": "uint256"},
+      {"internalType": "address[]","name": "path","type": "address[]"}
+    ],
+    "name": "getAmountsOut",
+    "outputs": [
+      {"internalType": "uint256[]","name": "amounts","type": "uint256[]"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256","name": "amountOutMin",
+      "type": "uint256"},
+      {"internalType": "address[]","name": "path","type": "address[]"},
+      {"internalType": "address","name": "to","type": "address"},
+      {"internalType": "uint256","name": "deadline","type": "uint256"}
+    ],
+    "name": "swapExactETHForTokens",
+    "outputs": [
+      {"internalType": "uint256[]","name": "amounts","type": "uint256[]"}
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256","name": "amountIn","type": "uint256"},
+      {"internalType": "uint256","name": "amountOutMin","type": "uint256"},
+      {"internalType": "address[]","name": "path","type": "address[]"},
+      {"internalType": "address","name": "to","type": "address"},
+      {"internalType": "uint256","name": "deadline","type": "uint256"}
+    ],
+    "name": "swapExactTokensForETH",
+    "outputs": [
+      {"internalType": "uint256[]","name": "amounts","type": "uint256[]"}
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256","name": "amountIn","type": "uint256"},
+      {"internalType": "uint256","name": "amountOutMin","type": "uint256"},
+      {"internalType": "address[]","name": "path","type": "address[]"},
+      {"internalType": "address","name": "to","type": "address"},
+      {"internalType": "uint256","name": "deadline","type": "uint256"}
+    ],
+    "name": "swapExactTokensForTokens",
+    "outputs": [
+      {"internalType": "uint256[]","name": "amounts","type": "uint256[]"}
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
+
+// ========== REAL SWAP FUNCTIONS ==========
+function getRealSwapConfig() {
+  return REAL_SWAP_CONFIG[currentNetwork];
+}
+
+function getRealDefaultTokens() {
+  return REAL_DEFAULT_TOKENS[currentNetwork] || [];
+}
+
+function getNativeSymbol() {
+  return currentNetwork === "BSC" ? "BNB" : "ETH";
+}
+
+function getWrappedNative() {
+  return getRealSwapConfig().wrappedNative;
+}
+
+function getRouterAddress() {
+  return getRealSwapConfig().router;
+}
+
+// ==========createTradeScreen  ==========
+
+function createTradeScreen() {
+  const existing = document.getElementById('tradeScreen');
+  if (existing) existing.remove();
+
+  
+  const tradeScreen = document.createElement('div');
+  tradeScreen.id = 'tradeScreen';
+  tradeScreen.className = 'trade-screen';
+  tradeScreen.innerHTML = `
+  
+          <!-- FROM Section -->
+      <div class="swap-input">
+        <label>Sell</label>
+        <div class="input-with-selector">
+          <input type="number" placeholder="0.0" id="fromAmount" class="amount-input" min="0" step="any">
+          <div class="token-selector">
+            <button class="token-selector-btn" id="fromTokenBtn">
+              <span id="fromTokenSymbol">${getNativeSymbol()}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="token-dropdown" id="fromTokenDropdown"></div>
+          </div>
+        </div>
+           <div class="balance-info">
+          <span>Balance: <span id="fromBalance">0.0000</span> <span id="fromBalanceSymbol">${getNativeSymbol()}</span></span>
+          <div class="balance-actions">
+            <button class="balance-action-btn" data-action="max">MAX</button>
+            <button class="balance-action-btn" data-action="half">HALF</button>
+          </div>
+           </div>
+         </div>
+
+      <!-- Swap Arrow -->
+      <div class="swap-arrow">
+        <button class="swap-arrow-btn" id="swapTokensBtn">
+          <i class="fas fa-arrow-down"></i>
+        </button>
+      </div>
+
+      <!-- TO Section -->
+      <div class="swap-input">
+        <label>Buy</label>
+        <div class="input-with-selector">
+          <input type="text" placeholder="0.0" id="toAmount" class="amount-input" readonly>
+          <div class="token-selector">
+            <button class="token-selector-btn" id="toTokenBtn">
+              <span id="toTokenSymbol">USDT</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="token-dropdown" id="toTokenDropdown"></div>
+          </div>
+        </div>
+        <div class="balance-info">
+          <span>Balance: <span id="toBalance">0.0000</span> <span id="toBalanceSymbol">USDT</span></span>
+        </div>
+      </div>
+
+      <!-- Price Info -->
+      <div id="priceInfo">
+        1 <span id="fromTokenPrice">${getNativeSymbol()}</span> = <span id="toTokenPrice">0</span> <span id="toTokenPriceSymbol">USDT</span>
+      </div>
+ <div style="
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-top: 15px;
+  white-space: nowrap;
+  overflow-x: auto;
+">
+
+  <label style="font-size: 13px; color: #666; font-weight: 500;">
+    Slippage Tolerance
+  </label>
+
+  <div style="
+    display: flex; 
+    gap: 5px; 
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  ">
+
+    <button class="slippage-preset" data-slippage="1"
+      style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 12px;">
+      1%
+    </button>
+
+    <button class="slippage-preset" data-slippage="2"
+      style="padding: 6px 10px; border: 1px solid #4a6cf7; border-radius: 6px; background: #f0f4ff; color: #4a6cf7; cursor: pointer; font-size: 12px;">
+      2%
+    </button>
+
+    <button class="slippage-preset" data-slippage="3"
+      style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 12px;">
+      3%
+    </button>
+
+    <input id="slippageInput" type="number" value="2" min="0.5" max="50" step="0.1"
+      style="width: 60px; padding: 6px; border-radius: 6px; border: 1px solid #ddd; text-align: center; font-size: 12px;">
+  </div>
+</div>
+
+          <!-- Swap Button -->
+          <div style="margin-top:12px">
+            <button class="swap-btn" id="swapBtn"><i class="fas fa-sync-alt"></i> Swap</button>
+          </div>
+
+          <div id="swapStatus" style="margin-top:10px;color:#444;font-size:13px"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+
+  document.body.appendChild(tradeScreen);
+  initializeRealTradeFunctionality();
+
+
+  // ========== REAL TRADE FUNCTIONALITY ==========
+function initializeRealTradeFunctionality() {
+  const fromAmountInput = document.getElementById('fromAmount');
+  const toAmountInput = document.getElementById('toAmount');
+  const slippageInput = document.getElementById('slippageInput');
+  const swapBtn = document.getElementById('swapBtn');
+  const statusDiv = document.getElementById('swapStatus');
+  const fromBalanceEl = document.getElementById('fromBalance');
+  const toBalanceEl = document.getElementById('toBalance');
+  const swapTokensBtn = document.getElementById('swapTokensBtn');
+  const priceInfoEl = document.getElementById('priceInfo');
+
+
+  let fromToken = { symbol: getNativeSymbol(), address: getNativeSymbol(), decimals: 18 };
+  let toToken = getRealDefaultTokens().find(t => t.symbol === 'USDT' || t.symbol === 'USDC') || getRealDefaultTokens()[1];
+
+  
+  // Initialize token displays
+  function updateTokenDisplays() {
+    document.getElementById('fromTokenSymbol').textContent = fromToken.symbol;
+    document.getElementById('toTokenSymbol').textContent = toToken.symbol;
+    document.getElementById('fromBalanceSymbol').textContent = fromToken.symbol;
+    document.getElementById('toBalanceSymbol').textContent = toToken.symbol;
+    document.getElementById('fromTokenPrice').textContent = fromToken.symbol;
+    document.getElementById('toTokenPriceSymbol').textContent = toToken.symbol;
+    
+    swapBtn.innerHTML = `<i class="fas fa-sync-alt"></i> Swap ${fromToken.symbol} → ${toToken.symbol}`;
+    updateBalances();
+    updatePriceInfo();
+  }
+
+  // Update balances
+  async function updateBalances() {
+    if (!currentAddress) return;
+
+    try {
+      // From token balance
+      if (fromToken.symbol === getNativeSymbol()) {
+        const balanceWei = await currentWeb3.eth.getBalance(currentAddress);
+        fromBalanceEl.textContent = parseFloat(currentWeb3.utils.fromWei(balanceWei, 'ether')).toFixed(4);
+      } else {
+        const contract = new currentWeb3.eth.Contract(tokenABI, fromToken.address);
+        const balanceWei = await contract.methods.balanceOf(currentAddress).call();
+        fromBalanceEl.textContent = (balanceWei / (10 ** fromToken.decimals)).toFixed(4);
+      }
+
+      // To token balance
+      if (toToken.symbol === getNativeSymbol()) {
+        const balanceWei = await currentWeb3.eth.getBalance(currentAddress);
+        toBalanceEl.textContent = parseFloat(currentWeb3.utils.fromWei(balanceWei, 'ether')).toFixed(4);
+      } else {
+        const contract = new currentWeb3.eth.Contract(tokenABI, toToken.address);
+        const balanceWei = await contract.methods.balanceOf(currentAddress).call();
+        toBalanceEl.textContent = (balanceWei / (10 ** toToken.decimals)).toFixed(4);
+      }
+    } catch (error) {
+      console.error("Balance update error:", error);
+      fromBalanceEl.textContent = "0.0000";
+      toBalanceEl.textContent = "0.0000";
+    }
+  }
+
+  // Real price estimation from DEX
+  async function estimateRealOutput() {
+    const fromAmount = parseFloat(fromAmountInput.value);
+    if (!fromAmount || fromAmount <= 0) {
+      toAmountInput.value = '';
+      return;
+    }
+
+    try {
+      const router = new currentWeb3.eth.Contract(UNISWAP_V2_ROUTER_ABI, getRouterAddress());
+      let output;
+
+      if (fromToken.symbol === getNativeSymbol() && toToken.symbol !== getNativeSymbol()) {
+        // Native to Token
+        const amountInWei = currentWeb3.utils.toWei(fromAmount.toString(), 'ether');
+        const path = [getWrappedNative(), toToken.address];
+        const amounts = await router.methods.getAmountsOut(amountInWei, path).call();
+        output = amounts[1] / (10 ** toToken.decimals);
+        
+      } else if (fromToken.symbol !== getNativeSymbol() && toToken.symbol === getNativeSymbol()) {
+        // Token to Native
+        const amountInWei = fromAmount * (10 ** fromToken.decimals);
+        const path = [fromToken.address, getWrappedNative()];
+        const amounts = await router.methods.getAmountsOut(amountInWei.toString(), path).call();
+        output = amounts[1] / (10 ** 18); // Native has 18 decimals
+        
+      } else if (fromToken.symbol !== getNativeSymbol() && toToken.symbol !== getNativeSymbol()) {
+        // Token to Token
+        const amountInWei = fromAmount * (10 ** fromToken.decimals);
+        const path = [fromToken.address, getWrappedNative(), toToken.address];
+        const amounts = await router.methods.getAmountsOut(amountInWei.toString(), path).call();
+        output = amounts[2] / (10 ** toToken.decimals);
+        
+      } else {
+        // Native to Native (not supported)
+        output = fromAmount;
+      }
+
+      toAmountInput.value = output.toFixed(6);
+      
+    } catch (error) {
+      console.error("Real estimation error:", error);
+      toAmountInput.value = '';
+      statusDiv.textContent = "Estimation failed - check token pair or liquidity";
+      statusDiv.style.color = "red";
+    }
+  }
+
+  // Update price info
+  async function updatePriceInfo() {
+    try {
+      const router = new currentWeb3.eth.Contract(UNISWAP_V2_ROUTER_ABI, getRouterAddress());
+      let price;
+
+      if (fromToken.symbol === getNativeSymbol() && toToken.symbol !== getNativeSymbol()) {
+        // 1 Native to Token price
+        const amountInWei = currentWeb3.utils.toWei("1", 'ether');
+        const path = [getWrappedNative(), toToken.address];
+        const amounts = await router.methods.getAmountsOut(amountInWei, path).call();
+        price = amounts[1] / (10 ** toToken.decimals);
+        
+      } else if (fromToken.symbol !== getNativeSymbol() && toToken.symbol === getNativeSymbol()) {
+        // 1 Token to Native price
+        const amountInWei = 1 * (10 ** fromToken.decimals);
+        const path = [fromToken.address, getWrappedNative()];
+        const amounts = await router.methods.getAmountsOut(amountInWei.toString(), path).call();
+        price = amounts[1] / (10 ** 18);
+        
+      } else if (fromToken.symbol !== getNativeSymbol() && toToken.symbol !== getNativeSymbol()) {
+        // Token to Token price
+        const amountInWei = 1 * (10 ** fromToken.decimals);
+        const path = [fromToken.address, getWrappedNative(), toToken.address];
+        const amounts = await router.methods.getAmountsOut(amountInWei.toString(), path).call();
+        price = amounts[2] / (10 ** toToken.decimals);
+        
+      } else {
+        price = 1;
+      }
+
+      document.getElementById('toTokenPrice').textContent = price.toFixed(6);
+      
+    } catch (error) {
+      console.error("Price update error:", error);
+      document.getElementById('toTokenPrice').textContent = "0";
+    }
+  }
+// Swap tokens button
+  swapTokensBtn.addEventListener('click', () => {
+    const temp = fromToken;
+    fromToken = toToken;
+    toToken = temp;
+    
+    const tempAmount = fromAmountInput.value;
+    fromAmountInput.value = toAmountInput.value;
+    toAmountInput.value = tempAmount;
+    
+    updateTokenDisplays();
+    estimateRealOutput();
+  });
+
+  // Amount input listener
+  fromAmountInput.addEventListener('input', estimateRealOutput);
+
+  // Initialize token selectors
+  function initTokenSelectors() {
+    const fromBtn = document.getElementById('fromTokenBtn');
+    const toBtn = document.getElementById('toTokenBtn');
+    const fromDropdown = document.getElementById('fromTokenDropdown');
+    const toDropdown = document.getElementById('toTokenDropdown');
+
+    const allTokens = [...getRealDefaultTokens(), ...tokens.filter(t => t.network === currentNetwork)];
+
+    function populateDropdown(dropdown, onSelect) {
+      dropdown.innerHTML = '';
+      allTokens.forEach(token => {
+        const option = document.createElement('div');
+        option.className = 'token-option';
+        option.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: #4a6cf7; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px;">
+              ${token.symbol.charAt(0)}
+            </div>
+            <div>
+              <div class="token-symbol">${token.symbol}</div>
+              <div class="token-name">${token.name || token.symbol}</div>
+            </div>
+          </div>
+        `;
+        option.addEventListener('click', () => {
+          onSelect(token);
+          dropdown.classList.remove('active');
+        });
+        dropdown.appendChild(option);
+      });
+    }
+
+    fromBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toDropdown.classList.remove('active');
+      fromDropdown.classList.toggle('active');
+      populateDropdown(fromDropdown, (token) => {
+        fromToken = token;
+        updateTokenDisplays();
+        estimateRealOutput();
+      });
+    });
+
+    toBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fromDropdown.classList.remove('active');
+      toDropdown.classList.toggle('active');
+      populateDropdown(toDropdown, (token) => {
+        toToken = token;
+        updateTokenDisplays();
+        estimateRealOutput();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      fromDropdown.classList.remove('active');
+      toDropdown.classList.remove('active');
+    });
+  }
+
+  
+// ========== UPDATED EVENT LISTENER ==========
+swapBtn.addEventListener('click', async () => {
+  if (!currentAddress || !currentPrivateKey) {
+    statusDiv.textContent = "Please unlock wallet first";
+    statusDiv.style.color = "red";
+    return;
+  }
+
+  const amount = parseFloat(fromAmountInput.value);
+  if (!amount || amount <= 0) {
+    statusDiv.textContent = "Please enter valid amount";
+    statusDiv.style.color = "red";
+    return;
+  }
+
+  const fromBalance = parseFloat(fromBalanceEl.textContent);
+  if (amount > fromBalance) {
+    statusDiv.textContent = "Insufficient balance";
+    statusDiv.style.color = "red";
+    return;
+  }
+
+  if (fromToken.symbol === toToken.symbol) {
+    statusDiv.textContent = "Cannot swap same token";
+    statusDiv.style.color = "red";
+    return;
+  }
+
+  try {
+    statusDiv.textContent = "🔄 Preparing transaction...";
+    statusDiv.style.color = "#4a6cf7";
+    swapBtn.disabled = true;
+
+    const slippage = parseFloat(slippageInput.value) || 2;
+    const router = new currentWeb3.eth.Contract(UNISWAP_V2_ROUTER_ABI, getRouterAddress());
+    const deadline = Math.floor(Date.now() / 1000) + 1200; // 20 minutes
+    
+    let txHash;
+
+    if (fromToken.symbol === getNativeSymbol() && toToken.symbol !== getNativeSymbol()) {
+      // Native to Token swap
+      txHash = await swapNativeToToken(amount, toToken, slippage, router, deadline);
+    } else if (fromToken.symbol !== getNativeSymbol() && toToken.symbol === getNativeSymbol()) {
+      // Token to Native swap
+      txHash = await swapTokenToNative(amount, fromToken, slippage, router, deadline);
+    } else if (fromToken.symbol !== getNativeSymbol() && toToken.symbol !== getNativeSymbol()) {
+      // Token to Token swap
+      txHash = await swapTokenToToken(amount, fromToken, toToken, slippage, router, deadline);
+    } else {
+      throw new Error("Invalid token pair");
+    }
+
+    statusDiv.textContent = `✅ Swap successful! Tx: ${txHash.substring(0, 10)}...`;
+    statusDiv.style.color = "green";
+
+    // Update balances after swap
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    await updateBalances();
+
+    // Add to transaction history
+    pushTxHistory({
+      type: `Swap ${fromToken.symbol} to ${toToken.symbol}`,
+      to: getRouterAddress(),
+      amount: amount,
+      txHash: txHash,
+      ts: Date.now()
+    });
+
+  } catch (error) {
+    console.error("Real swap error:", error);
+    let errorMessage = error.message || "Swap failed";
+    
+    if (errorMessage.includes("user rejected") || errorMessage.includes("denied transaction")) {
+      errorMessage = "Transaction rejected by user";
+    } else if (errorMessage.includes("insufficient funds")) {
+      errorMessage = "Insufficient funds for gas";
+    } else if (errorMessage.includes("INSUFFICIENT_OUTPUT_AMOUNT") || errorMessage.includes("MIN_OUTPUT")) {
+      errorMessage = "Slippage too high - try increasing slippage tolerance";
+    }
+    
+    statusDiv.textContent = `❌ ${errorMessage}`;
+    statusDiv.style.color = "red";
+  } finally {
+    swapBtn.disabled = false;
+  }
+});
+// ========== SWAP FUNCTIONS WITH PRIVATE KEY ==========
+async function swapTokenToNative(amount, fromToken, slippage, router, deadline) {
+  try {
+    const recipient = currentAddress;
+    
+    // Convert amount to wei with proper decimals
+    const tokenContract = new currentWeb3.eth.Contract(ERC20_ABI, fromToken.address);
+    const decimals = await tokenContract.methods.decimals().call();
+    const amountIn = currentWeb3.utils.toBN(amount * Math.pow(10, decimals));
+    
+    // 1. Check allowance
+    const currentAllowance = await tokenContract.methods
+      .allowance(recipient, getRouterAddress())
+      .call();
+    
+    console.log(`Current allowance: ${currentAllowance}, Amount needed: ${amountIn}`);
+    
+    // 2. Approve if needed (WITH PRIVATE KEY)
+    if (BigInt(currentAllowance) < BigInt(amountIn)) {
+      statusDiv.textContent = "🔄 Approving token...";
+      
+      const approveData = tokenContract.methods
+        .approve(getRouterAddress(), amountIn)
+        .encodeABI();
+      
+      const approveTx = {
+        from: recipient,
+        to: fromToken.address,
+        data: approveData,
+        gas: 100000,
+        gasPrice: await currentWeb3.eth.getGasPrice()
+      };
+      
+      const signedApproveTx = await currentWeb3.eth.accounts.signTransaction(approveTx, currentPrivateKey);
+      const approveReceipt = await currentWeb3.eth.sendSignedTransaction(signedApproveTx.rawTransaction);
+      
+      console.log('Approval successful:', approveReceipt.transactionHash);
+    }
+    
+    // 3. Get expected output amount
+    statusDiv.textContent = "🔄 Calculating best price...";
+    const wrappedNative = getWrappedNative();
+    const path = [fromToken.address, wrappedNative];
+    const amounts = await router.methods.getAmountsOut(amountIn.toString(), path).call();
+    const expectedOut = amounts[1];
+    
+    // 4. Calculate minimum output with slippage
+    const slippageBps = BigInt(Math.floor(slippage * 100));
+    const amountOutMin = (BigInt(expectedOut) * (10000n - slippageBps)) / 10000n;
+    
+    console.log(`Expected output: ${expectedOut}, Min output: ${amountOutMin}`);
+    
+    // 5. Execute swap (WITH PRIVATE KEY)
+    statusDiv.textContent = "🔄 Swapping tokens...";
+    
+    const swapData = router.methods
+      .swapExactTokensForETH(
+        amountIn.toString(),
+        amountOutMin.toString(),
+        path,
+        recipient,
+        deadline
+      )
+      .encodeABI();
+    
+    const swapTx = {
+      from: recipient,
+      to: getRouterAddress(),
+      data: swapData,
+      gas: 300000,
+      gasPrice: await currentWeb3.eth.getGasPrice()
+    };
+    
+    const signedSwapTx = await currentWeb3.eth.accounts.signTransaction(swapTx, currentPrivateKey);
+    const swapReceipt = await currentWeb3.eth.sendSignedTransaction(signedSwapTx.rawTransaction);
+    
+    console.log('Swap successful:', swapReceipt.transactionHash);
+    return swapReceipt.transactionHash;
+    
+  } catch (error) {
+    console.error('Token to native swap error:', error);
+    throw error;
+  }
+}
+
+async function swapNativeToToken(amount, toToken, slippage, router, deadline) {
+  try {
+    const recipient = currentAddress;
+    const amountIn = currentWeb3.utils.toWei(amount.toString(), 'ether');
+    const wrappedNative = getWrappedNative();
+    
+    // 1. Get expected output amount
+    statusDiv.textContent = "🔄 Calculating best price...";
+    const path = [wrappedNative, toToken.address];
+    const amounts = await router.methods.getAmountsOut(amountIn, path).call();
+    const expectedOut = amounts[1];
+    
+    // 2. Calculate minimum output with slippage
+    const slippageBps = BigInt(Math.floor(slippage * 100));
+    const amountOutMin = (BigInt(expectedOut) * (10000n - slippageBps)) / 10000n;
+    
+    console.log(`Expected output: ${expectedOut}, Min output: ${amountOutMin}`);
+    
+    // 3. Execute swap (WITH PRIVATE KEY)
+    statusDiv.textContent = "🔄 Swapping tokens...";
+    
+    const swapData = router.methods
+      .swapExactETHForTokens(
+        amountOutMin.toString(),
+        path,
+        recipient,
+        deadline
+      )
+      .encodeABI();
+    
+    const swapTx = {
+      from: recipient,
+      to: getRouterAddress(),
+      value: amountIn,
+      data: swapData,
+      gas: 300000,
+      gasPrice: await currentWeb3.eth.getGasPrice()
+    };
+    
+    const signedSwapTx = await currentWeb3.eth.accounts.signTransaction(swapTx, currentPrivateKey);
+    const swapReceipt = await currentWeb3.eth.sendSignedTransaction(signedSwapTx.rawTransaction);
+    
+    console.log('Swap successful:', swapReceipt.transactionHash);
+    return swapReceipt.transactionHash;
+    
+  } catch (error) {
+    console.error('Native to token swap error:', error);
+    throw error;
+  }
+}
+
+async function swapTokenToToken(amount, fromToken, toToken, slippage, router, deadline) {
+  try {
+    const recipient = currentAddress;
+    
+    // Convert amount to wei with proper decimals
+    const tokenContract = new currentWeb3.eth.Contract(ERC20_ABI, fromToken.address);
+    const decimals = await tokenContract.methods.decimals().call();
+    const amountIn = currentWeb3.utils.toBN(amount * Math.pow(10, decimals));
+    
+    // 1. Check allowance
+    const currentAllowance = await tokenContract.methods
+      .allowance(recipient, getRouterAddress())
+      .call();
+    
+    console.log(`Current allowance: ${currentAllowance}, Amount needed: ${amountIn}`);
+    
+    // 2. Approve if needed (WITH PRIVATE KEY)
+    if (BigInt(currentAllowance) < BigInt(amountIn)) {
+      statusDiv.textContent = "🔄 Approving token...";
+      
+      const approveData = tokenContract.methods
+        .approve(getRouterAddress(), amountIn)
+        .encodeABI();
+      
+      const approveTx = {
+        from: recipient,
+        to: fromToken.address,
+        data: approveData,
+        gas: 100000,
+        gasPrice: await currentWeb3.eth.getGasPrice()
+      };
+      
+      const signedApproveTx = await currentWeb3.eth.accounts.signTransaction(approveTx, currentPrivateKey);
+      const approveReceipt = await currentWeb3.eth.sendSignedTransaction(signedApproveTx.rawTransaction);
+      
+      console.log('Approval successful:', approveReceipt.transactionHash);
+    }
+    
+    // 3. Get expected output amount
+    statusDiv.textContent = "🔄 Calculating best price...";
+    const path = [fromToken.address, toToken.address];
+    const amounts = await router.methods.getAmountsOut(amountIn.toString(), path).call();
+    const expectedOut = amounts[1];
+    
+    // 4. Calculate minimum output with slippage
+    const slippageBps = BigInt(Math.floor(slippage * 100));
+    const amountOutMin = (BigInt(expectedOut) * (10000n - slippageBps)) / 10000n;
+    
+    console.log(`Expected output: ${expectedOut}, Min output: ${amountOutMin}`);
+    
+    // 5. Execute swap (WITH PRIVATE KEY)
+    statusDiv.textContent = "🔄 Swapping tokens...";
+    
+    const swapData = router.methods
+      .swapExactTokensForTokens(
+        amountIn.toString(),
+        amountOutMin.toString(),
+        path,
+        recipient,
+        deadline
+      )
+      .encodeABI();
+    
+    const swapTx = {
+      from: recipient,
+      to: getRouterAddress(),
+      data: swapData,
+      gas: 300000,
+      gasPrice: await currentWeb3.eth.getGasPrice()
+    };
+    
+    const signedSwapTx = await currentWeb3.eth.accounts.signTransaction(swapTx, currentPrivateKey);
+    const swapReceipt = await currentWeb3.eth.sendSignedTransaction(signedSwapTx.rawTransaction);
+    
+    console.log('Swap successful:', swapReceipt.transactionHash);
+    return swapReceipt.transactionHash;
+    
+  } catch (error) {
+    console.error('Token to token swap error:', error);
+    throw error;
+  }
+}
+// ========== ERC20 ABI (Halkan ku dar) ==========
+const ERC20_ABI = [
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{"name": "", "type": "uint8"}],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [{"name": "_owner", "type": "address"}],
+    "name": "balanceOf",
+    "outputs": [{"name": "balance", "type": "uint256"}],
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {"name": "_spender", "type": "address"},
+      {"name": "_value", "type": "uint256"}
+    ],
+    "name": "approve",
+    "outputs": [{"name": "", "type": "bool"}],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {"name": "_owner", "type": "address"},
+      {"name": "_spender", "type": "address"}
+    ],
+    "name": "allowance",
+    "outputs": [{"name": "", "type": "uint256"}],
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {"name": "_to", "type": "address"},
+      {"name": "_value", "type": "uint256"}
+    ],
+    "name": "transfer",
+    "outputs": [{"name": "", "type": "bool"}],
+    "type": "function"
+  }
+];
+  // Initialize
+  updateTokenDisplays();
+  initTokenSelectors();
+  updateBalances();
+}
+
+  // Focus on input for better UX
+  fromAmountInput.focus();
+}
+
+ 
+// Initialize bottom navigation when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM loaded, initializing navigation...");
+  initBottomNavigation();
+});
+  
+const homeNav = document.getElementById('homeNavigation');
+const iframeContainer = document.getElementById('iframeContainer');
+
+function openInApp(url) {
+    // Hide home navigation
+    homeNav.style.display = 'none';
+    // Show iframe container
+    iframeContainer.style.display = 'block';
+    // Clear old content
+    iframeContainer.innerHTML = '';
+
+    // Create iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '12px';
+    iframeContainer.appendChild(iframe);
+
+  // Create small circular back button with 🔙 icon at right center
+const backBtn = document.createElement('button');
+backBtn.innerHTML = '🔙'; // back icon
+backBtn.style.position = 'absolute';
+backBtn.style.top = '50%'; // vertical center
+backBtn.style.right = '20px'; // dhinaca midig
+backBtn.style.transform = 'translateY(-50%)'; // si uu u center noqdo
+backBtn.style.width = '50px';
+backBtn.style.height = '50px';
+backBtn.style.borderRadius = '50%';
+backBtn.style.border = 'none';
+backBtn.style.background = 'linear-gradient(135deg, #1a73e8, #0f204d)'; // blue + dark
+backBtn.style.color = '#fff';
+backBtn.style.fontSize = '24px';
+backBtn.style.cursor = 'pointer';
+backBtn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+backBtn.style.transition = 'transform 0.2s, box-shadow 0.2s';
+backBtn.style.zIndex = '1000';
+
+// Hover effect
+backBtn.onmouseover = () => {
+    backBtn.style.transform = 'translateY(-50%) scale(1.1)';
+    backBtn.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
+};
+backBtn.onmouseout = () => {
+    backBtn.style.transform = 'translateY(-50%) scale(1)';
+    backBtn.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+};
+
+// Click to go back
+backBtn.onclick = () => {
+    iframeContainer.style.display = 'none';
+    homeNav.style.display = 'flex';
+};
+
+iframeContainer.appendChild(backBtn);
+}
+// Update header + unit
+function updateNetworkHeader() {
+    const headerEl = document.querySelector("#leftCol .wallet-header h3");
+    let netLabel = currentNetwork === "BSC" ? "BSC" : "Base";
+    headerEl.innerHTML = `<i class="fas fa-wallet"></i> Laam Wallet (${netLabel})`;
+
+    // Update balance unit
+    const balanceUnitEl = document.getElementById("totalBalance");
+    if(balanceUnitEl && currentAddress){
+        updateWalletUI();
+    }
+}
+
+// Debug function
+window.debugWallet = function() {
+    return {
+        currentAddress,
+        hasPrivateKey: !!currentPrivateKey,
+        encrypted: !!localStorage.getItem("laam_encrypted_priv"),
+        address: !!localStorage.getItem("laam_wallet_address"),
+        pinSet: !!localStorage.getItem("laam_pin_set"),
+        tokens: tokens.length
+    };
+};
+
+function initializeBalanceActions() {
+    // Remove any existing event listeners first
+    const newMaxBtn = document.querySelector('.balance-action-btn[data-action="max"]');
+    const newHalfBtn = document.querySelector('.balance-action-btn[data-action="half"]');
+    
+    if (newMaxBtn) {
+      newMaxBtn.replaceWith(newMaxBtn.cloneNode(true));
+    }
+    if (newHalfBtn) {
+      newHalfBtn.replaceWith(newHalfBtn.cloneNode(true));
+    }
+}
+    
+        
+console.log("🔧 Debug: window.debugWallet()");
+// ===== Keyboard-aware positioning for mobile =====
+(function attachKeyboardAwareness() {
+  const tradeScreen = document.getElementById('tradeScreen');
+  if (!tradeScreen) return;
+
+  // Create inner scroll wrapper if not exists
+  let inner = tradeScreen.querySelector('.swap-container-inner');
+  if (!inner) {
+    const old = tradeScreen.querySelector('.swap-container');
+    inner = document.createElement('div');
+    inner.className = 'swap-container-inner';
+    // Move existing children into inner
+    while (old.firstChild) inner.appendChild(old.firstChild);
+    old.appendChild(inner);
+  }
+
+  // Helper to reset bottom
+  function resetBottom() {
+    tradeScreen.style.bottom = '0px';
+    tradeScreen.style.transition = 'bottom 200ms ease';
+  }
+
+  // If visualViewport supported, use it to detect keyboard height
+  if (window.visualViewport) {
+    let lastBottom = 0;
+    const onResize = () => {
+      const viewport = window.visualViewport;
+      // distance between layout viewport and visual viewport bottom
+      const kbHeight = window.innerHeight - viewport.height - (viewport.offsetTop || 0);
+      const bottomPx = Math.max(0, Math.round(kbHeight));
+      if (bottomPx !== lastBottom) {
+        tradeScreen.style.bottom = bottomPx + 'px';
+        tradeScreen.style.transition = 'bottom 180ms ease';
+        lastBottom = bottomPx;
+      }
+    };
+
+    window.visualViewport.addEventListener('resize', onResize);
+    window.visualViewport.addEventListener('scroll', onResize);
+    // initial
+    onResize();
+    // cleanup if needed when trade screen removed
+    // (not strictly necessary here)
+  } else {
+    // Fallback: listen for window resize (may detect keyboard on some browsers)
+    let initialInnerHeight = window.innerHeight;
+    window.addEventListener('resize', () => {
+      const diff = initialInnerHeight - window.innerHeight;
+      if (diff > 150) {
+        // assume keyboard open
+        tradeScreen.style.bottom = diff + 'px';
+      } else {
+        resetBottom();
+      }
+    });
+  }
+
+  // Ensure focused inputs are scrolled into view inside inner container
+  tradeScreen.addEventListener('focusin', (e) => {
+    const target = e.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      // small delay so keyboard can open
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 160);
+    }
+  });
+
+  // When trade screen opens you might also want to ensure body doesn't scroll behind:
+  // Optional: lock body scroll while trade-screen is open
+  function lockBody(lock) {
+    if (lock) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+  }
+
+  // If your code opens/closes tradeScreen, call lockBody(true/false) accordingly.
+  // Example: lockBody(true) when opening, lockBody(false) on close.
+})();
+  document.getElementById("closeTradeScreen").addEventListener("click", () => {
+    const scr = document.getElementById("tradeScreen");
+    if (scr) scr.remove();
+
+    // Optional: if you want to restore original home screen
+    document.getElementById("tradeScreenContainer").style.display = "none";
+
+    // Re-activate bottom nav
+    const homeTab = document.querySelector('.nav-item[data-tab="home"]');
+    if (homeTab) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        homeTab.classList.add('active');
+    }
+});
+async function ensureApproval(tokenAddress, amountIn) {
+  if (tokenAddress === "BNB" || tokenAddress === "ETH") return true;
+
+  const tokenContract = new web3.eth.Contract(ERC20_ABI, tokenAddress);
+  const router = getRouterAddress();
+
+  const allowance = await tokenContract.methods.allowance(currentUser, router).call();
+
+  if (BigInt(allowance) >= BigInt(amountIn)) {
+    return true;
+  }
+
+  console.log("⏳ Approving token...");
+
+  await tokenContract.methods.approve(router, amountIn)
+    .send({ from: currentUser });
+
+  return true;
+}
+
+</script>
+</body>
+</html>
